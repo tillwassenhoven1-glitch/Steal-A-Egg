@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>🥚 Steal an Egg</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#0b1020;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#fff;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{display:block}
+.hud{position:fixed;z-index:5;pointer-events:none}
+#hudL{top:8px;left:8px;display:flex;flex-direction:column;gap:5px}
+#hudR{top:8px;right:8px;display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.pill{background:rgba(10,15,35,.78);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:5px 10px;font-weight:700;font-size:15px;white-space:nowrap}
+.pill small{font-weight:600;opacity:.75;font-size:12px}
+#btnRow{display:flex;gap:6px;pointer-events:auto}
+.ib{pointer-events:auto;background:rgba(10,15,35,.85);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:12px;font-size:20px;width:42px;height:42px;cursor:pointer}
+.ib:active{transform:scale(.93)}
+#mini{top:8px;left:50%;transform:translateX(-50%);width:min(46vw,420px);height:14px;border-radius:7px;overflow:hidden;display:flex;border:1px solid rgba(255,255,255,.25)}
+#mini div{flex:1}
+#miniP{position:absolute;top:-3px;width:6px;height:20px;background:#fff;border-radius:3px;box-shadow:0 0 6px #fff}
+#run{top:22%;left:50%;transform:translateX(-50%);font-size:58px;font-weight:900;color:#ff3b3b;text-shadow:0 0 18px #f00,0 3px 0 #000;display:none;letter-spacing:3px}
+#hint{bottom:18px;left:50%;transform:translateX(-50%);font-size:15px;display:none}
+#ver{bottom:6px;left:8px;font-size:12px;opacity:.6}
+#toasts{top:70px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px}
+.toast{background:rgba(10,15,35,.92);border:1px solid rgba(255,255,255,.2);padding:7px 14px;border-radius:12px;font-weight:700;font-size:14px;animation:tin .25s ease;text-align:center;max-width:90vw}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1}}
+#tmUI{bottom:90px;left:50%;transform:translateX(-50%);display:none;pointer-events:auto;text-align:center;background:rgba(10,15,35,.88);border-radius:14px;padding:10px 14px;border:1px solid rgba(255,255,255,.2)}
+#tmBar{width:260px;height:22px;border-radius:11px;background:linear-gradient(90deg,#7f1d1d,#b45309 32%,#15803d 43%,#22c55e 50%,#15803d 57%,#b45309 68%,#7f1d1d);position:relative;margin:6px auto}
+#tmMark{position:absolute;top:-4px;width:6px;height:30px;background:#fff;border-radius:3px;box-shadow:0 0 6px #000}
+#tmBtn{margin-top:6px;font-size:18px;font-weight:800;padding:8px 22px;border-radius:12px;border:0;background:#22c55e;color:#04210f;cursor:pointer}
+#touch{display:none}
+#joy{position:fixed;left:22px;bottom:30px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.25);z-index:6;touch-action:none}
+#joyK{position:absolute;left:40px;top:40px;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.35)}
+.tb{position:fixed;z-index:6;width:66px;height:66px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(10,15,35,.75);color:#fff;font-size:26px;font-weight:800;touch-action:none}
+#bE{right:24px;bottom:40px;width:80px;height:80px;background:rgba(34,197,94,.55)}
+#bQ{right:118px;bottom:30px}
+#bB{right:40px;bottom:132px}
+#modalBg{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:none;align-items:center;justify-content:center}
+#modal{background:#141b33;border:1px solid rgba(255,255,255,.18);border-radius:18px;width:min(720px,94vw);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#mHead{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+#mTitle{font-size:20px;font-weight:800}
+#mClose{background:#334155;border:0;color:#fff;border-radius:10px;font-size:18px;width:36px;height:36px;cursor:pointer}
+#mBody{padding:12px 16px;overflow:auto;user-select:text}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.card{background:#1e2747;border-radius:12px;padding:8px;border:2px solid transparent;font-size:13px;display:flex;flex-direction:column;gap:3px}
+.card .em{font-size:30px;text-align:center}
+.card b{font-size:14px}
+.btn{background:#3b82f6;border:0;color:#fff;font-weight:700;border-radius:9px;padding:6px 10px;cursor:pointer;font-size:13px}
+.btn:disabled{background:#475569;opacity:.6;cursor:default}
+.btn.g{background:#16a34a}.btn.r{background:#dc2626}.btn.p{background:#9333ea}.btn.y{background:#d97706}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1e2747;border-radius:12px;padding:9px 12px;margin-bottom:7px}
+.row .t{display:flex;flex-direction:column}
+.row .t small{opacity:.7}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{background:#263156;border:0;color:#fff;padding:7px 12px;border-radius:10px;font-weight:700;cursor:pointer}
+.tabs button.on{background:#3b82f6}
+.bar{height:8px;background:#0b1020;border-radius:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#a3e635)}
+.mut{font-size:11px;padding:1px 6px;border-radius:6px;background:#be185d;margin-right:3px}
+.mut.s{background:#0891b2}
+.idx{display:grid;grid-template-columns:110px repeat(8,1fr);gap:4px;align-items:center;font-size:12px}
+.idx .c{background:#1e2747;border-radius:8px;text-align:center;padding:4px 0;font-size:22px}
+.idx .c.no{opacity:.35;font-size:16px}
+input[type=text]{background:#0b1020;border:1px solid #334155;color:#fff;border-radius:9px;padding:8px;font-size:15px}
+p.note{opacity:.75;font-size:13px;margin:4px 0 10px}
+#welcome{position:fixed;inset:0;z-index:30;background:radial-gradient(circle at 50% 30%,#1f3a8a,#0b1020 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+#welcome h1{font-size:clamp(40px,9vw,80px);margin:0;text-shadow:0 5px 0 #000}
+#welcome p{max-width:520px;opacity:.85}
+#playBtn{font-size:24px;font-weight:900;padding:14px 46px;border-radius:16px;border:0;background:#facc15;color:#1a1300;cursor:pointer;margin-top:10px;box-shadow:0 6px 0 #a16207}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hudL" class="hud">
+  <div class="pill" id="hMoney">💰 0</div>
+  <div class="pill" id="hSpeed">⚡ 0</div>
+  <div class="pill" id="hPen">🥚 Pen</div>
+</div>
+<div id="mini" class="hud"></div>
+<div id="hudR" class="hud">
+  <div id="btnRow"><button class="ib" id="btnIdx" title="Index">📖</button><button class="ib" id="btnSet" title="Einstellungen">⚙️</button></div>
+  <div class="pill" id="hDay">☀️</div>
+  <div class="pill" id="hReset">🔄</div>
+</div>
+<div id="run" class="hud">RUN!!</div>
+<div id="toasts" class="hud"></div>
+<div id="hint" class="hud pill"></div>
+<div id="ver" class="hud"></div>
+<div id="tmUI" class="hud">
+  <div style="font-weight:800">🏃 Laufband – drück im grünen Bereich!</div>
+  <div id="tmBar"><div id="tmMark"></div></div>
+  <div id="tmInfo" style="font-size:13px;opacity:.85"></div>
+  <button id="tmBtn">👟 Tritt! <small>(Leertaste)</small></button>
+</div>
+
+<div id="touch">
+  <div id="joy"><div id="joyK"></div></div>
+  <button class="tb" id="bE">E</button>
+  <button class="tb" id="bQ">🏏</button>
+  <button class="tb" id="bB">🪤</button>
+</div>
+
+<div id="modalBg"><div id="modal">
+  <div id="mHead"><div id="mTitle"></div><button id="mClose">✕</button></div>
+  <div id="mBody"></div>
+</div></div>
+
+<div id="welcome">
+  <h1>🥚 Steal an Egg</h1>
+  <p>Schnapp dir Eier aus 9 Biomen, renn vor den Wächtern weg und bring sie in deinen Pen. Lass sie schlüpfen und deine Pets Geld verdienen!</p>
+  <p style="font-size:14px">💻 WASD / Pfeile laufen · <b>E</b> aufheben/benutzen · <b>Q</b> Schläger · <b>B</b> Bärenfalle · <b>Leertaste</b> Laufband<br>📱 Joystick links, Knöpfe rechts</p>
+  <button id="playBtn">▶️ Spielen</button>
+  <p id="offlineMsg" style="color:#facc15;font-weight:700"></p>
+</div>
+
+<script>
+'use strict';
+const VERSION='0.1 Open Beta';
+const SAVE_KEY='stealAnEgg_save_v1';
+const BASE_W=1000,BIO_W=1600,H=720,NB=9,WORLD_W=BASE_W+NB*BIO_W;
+const DAY_LEN=150,NIGHT_LEN=60,CYCLE=DAY_LEN+NIGHT_LEN,RESET_EVERY=300,LOCK_TIME=13;
+const EMOJI_FONT='"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+
+const BIOMES=[
+ {n:'Wald',e:'🌲',req:0,c1:'#3f7d3a',c2:'#376f33',g:'👹',deco:['🌲','🌳','🍄','🌳']},
+ {n:'See',e:'🏞️',req:900,c1:'#3e8db0',c2:'#367c9b',g:'🐊',deco:['🌿','🪨','💧','🌾']},
+ {n:'Wüste',e:'🏜️',req:1e4,c1:'#d6b46a',c2:'#c9a65c',g:'🦂',deco:['🌵','🪨','🦴','🌵']},
+ {n:'Dschungel',e:'🌴',req:4e4,c1:'#1f7a3d',c2:'#1a6b35',g:'🦍',deco:['🌴','🌿','🍌','🌴']},
+ {n:'Schnee',e:'❄️',req:1.7e5,c1:'#dfeaf3',c2:'#cfdde9',g:'☃️',deco:['❄️','⛄','🌲','🧊']},
+ {n:'Vulkan',e:'🌋',req:7e5,c1:'#4a2620',c2:'#3d1f1a',g:'😈',deco:['🌋','🪨','🔥','🔥']},
+ {n:'Abyss Ocean',e:'🌊',req:2.5e6,c1:'#0f2f5c',c2:'#0c274e',g:'🦑',deco:['🐚','🫧','🌊','🐚']},
+ {n:'Prähistorisch',e:'🦖',req:1.7e7,c1:'#6b6a2c',c2:'#5d5c26',g:'🦖',deco:['🌿','🦴','🪨','🌋']},
+ {n:'Kosmisch',e:'🌌',req:7e8,c1:'#1b1240',c2:'#140d33',g:'👾',deco:['⭐','✨','🪐','🌟']},
+];
+const PETS=[
+ [['🐔','Huhn'],['🐇','Hase'],['🦊','Fuchs'],['🦉','Eule'],['🦌','Hirsch'],['🐗','Wildschwein'],['🐻','Bär'],['🦄','Waldeinhorn']],
+ [['🦆','Ente'],['🐸','Frosch'],['🐢','Schildkröte'],['🦢','Schwan'],['🦫','Biber'],['🦦','Otter'],['🐊','Krokodil'],['🐉','Seedrache']],
+ [['🦎','Eidechse'],['🦂','Skorpion'],['🐪','Kamel'],['🐍','Klapperschlange'],['🦅','Wüstenadler'],['🐫','Dromedar'],['🦁','Löwe'],['🐲','Sanddrache']],
+ [['🐒','Affe'],['🦜','Papagei'],['🦥','Faultier'],['🐆','Leopard'],['🐍','Python'],['🦍','Gorilla'],['🐅','Tiger'],['🐉','Dschungeldrache']],
+ [['🐧','Pinguin'],['🦭','Robbe'],['🐺','Wolf'],['🦌','Rentier'],['🐻‍❄️','Eisbär'],['🦣','Mammut'],['🐋','Narwal'],['🐲','Eisdrache']],
+ [['🦎','Feuerechse'],['🐌','Lavaschnecke'],['🦂','Glutskorpion'],['🦅','Feuervogel'],['🐕','Höllenhund'],['🐂','Lavabulle'],['👹','Vulkangeist'],['🐲','Magmadrache']],
+ [['🐠','Laternenfisch'],['🦀','Tiefseekrabbe'],['🐡','Kugelfisch'],['🐙','Krake'],['🦑','Riesenkalmar'],['🦈','Hai'],['🐳','Blauwal'],['🐉','Leviathan']],
+ [['🦤','Dodo'],['🐊','Urkrokodil'],['🦕','Brachiosaurus'],['🦅','Pterodactylus'],['🦣','Wollmammut'],['🦏','Triceratops'],['🦖','T-Rex'],['🐲','Urdrache']],
+ [['👽','Alien'],['🛸','UFO-Käfer'],['🌙','Mondhase'],['☄️','Kometenwolf'],['🌟','Sternfuchs'],['🪐','Planetenwal'],['🌌','Galaxiedrache'],['🌠','Sternengott']],
+];
+const RAR=[
+ {n:'Gewöhnlich',c:'#d4d4d4',w:50,m:1,g:1,h:20},
+ {n:'Ungewöhnlich',c:'#4ade80',w:25,m:1.6,g:1.25,h:45},
+ {n:'Selten',c:'#60a5fa',w:12,m:2.6,g:1.6,h:90},
+ {n:'Episch',c:'#c084fc',w:7,m:4.2,g:2.1,h:180},
+ {n:'Legendär',c:'#fbbf24',w:3.5,m:7,g:2.8,h:420},
+ {n:'Mythisch',c:'#f87171',w:1.6,m:12,g:3.8,h:900},
+ {n:'Göttlich',c:'#22d3ee',w:0.7,m:22,g:5,h:2400},
+ {n:'Secret',c:'#ffffff',w:0.2,m:50,g:7,h:5400},
+];
+const SIZES=[
+ {n:'Klein',min:.4,max:1,w:40,carry:1,h:.8},
+ {n:'Normal',min:1,max:3,w:35,carry:.95,h:1},
+ {n:'Groß',min:3,max:8,w:16,carry:.87,h:1.3},
+ {n:'Riesig',min:8,max:20,w:7,carry:.78,h:1.7},
+ {n:'Titan',min:20,max:60,w:2,carry:.68,h:2.3},
+];
+const BBASE=[1,5,30,160,900,5000,3e4,2e5,1.5e6];
+const TRAILS=[
+ {n:'Funken',r:0,b:.05,c:500,col:'#e5e5e5'},
+ {n:'Blätter',r:1,b:.10,c:5e3,col:'#4ade80'},
+ {n:'Blasen',r:2,b:.15,c:4e4,col:'#7dd3fc'},
+ {n:'Sand',r:3,b:.25,c:3e5,col:'#fcd34d'},
+ {n:'Schnee',r:3,b:.40,c:2.5e6,col:'#ffffff'},
+ {n:'Feuer',r:4,b:.60,c:2e7,col:'#f97316'},
+ {n:'Abyss',r:5,b:.90,c:2e8,col:'#2563eb'},
+ {n:'Urzeit',r:5,b:1.3,c:2e9,col:'#84cc16'},
+ {n:'Sterne',r:6,b:2,c:3e10,col:'#fde047'},
+ {n:'Divine',r:7,b:3.5,c:5e11,col:'rainbow'},
+];
+const TRAIL_RAR=['Common','Uncommon','Rare','Epic','Legendary','Mythic','Godly','Divine'];
+const BATS=[
+ {n:'Holzschläger',c:'#a16207'},{n:'Waldschläger',c:'#16a34a'},{n:'Seeschläger',c:'#0ea5e9'},{n:'Wüstenschläger',c:'#eab308'},
+ {n:'Dschungelschläger',c:'#15803d'},{n:'Eisschläger',c:'#bae6fd'},{n:'Lavaschläger',c:'#ef4444'},{n:'Abyss-Schläger',c:'#1d4ed8'},
+ {n:'Urzeitschläger',c:'#65a30d'},{n:'Kosmos-Schläger',c:'#c026d3'},
+];
+const PASSES=[{n:'+150K Speed',v:1.5e5,c:2.5e5},{n:'+1 Mio. Speed',v:1e6,c:3e6},{n:'+10 Mio. Speed',v:1e7,c:6e7}];
+const ST={pen:{x:70,y:80,w:500,h:330},tm:{x:640,y:105,w:160,h:90},shop:{x:890,y:150},sell:{x:890,y:340},fuse:{x:690,y:330},sakura:{x:690,y:560},index:{x:890,y:560}};
+const SPAWN={x:330,y:560};
+const MAX_SLOTS=30;
+
+// ---------- helpers ----------
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function wpick(arr){let t=0;for(const o of arr)t+=o.w;let r=Math.random()*t;for(let i=0;i<arr.length;i++){r-=arr[i].w;if(r<=0)return i}return 0}
+function fmt(n){
+  if(!isFinite(n))return '∞';
+  const u=[[1e18,'Trd.'],[1e15,'Brd.'],[1e12,'Bio.'],[1e9,'Mrd.'],[1e6,'Mio.'],[1e3,'K']];
+  for(const [v,s] of u) if(n>=v){const x=n/v;return (x>=100?x.toFixed(0):x>=10?x.toFixed(1):x.toFixed(2)).replace('.',',')+(s==='K'?'K':' '+s)}
+  return n<10&&n%1?n.toFixed(1).replace('.',','):Math.floor(n).toString();
+}
+function fmtT(s){s=Math.max(0,Math.ceil(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(x).padStart(2,'0')}`:`${m}:${String(x).padStart(2,'0')}`}
+function sizeOf(kg){for(let i=SIZES.length-1;i>=0;i--)if(kg>=SIZES[i].min)return i;return 0}
+const speedPx=s=>130+26*Math.log2(1+Math.max(0,s)/60);
+const income=o=>BBASE[o.b]*RAR[o.r].m*Math.pow(o.kg,1.35)*mutMult(o.mut);
+function mutMult(m){let x=1;if(m&&m.includes('Bloom'))x*=1.5;if(m&&m.includes('Spirit'))x*=4;return x}
+const hatchTime=(b,r,s,mut)=>RAR[r].h*(1+.2*b)*SIZES[s].h*Math.pow(1.25,(mut||[]).length);
+const petName=o=>PETS[o.b][o.r][1];
+const petEmo=o=>PETS[o.b][o.r][0];
+const tmSteps=L=>Math.floor(5*Math.pow(1.55,L));
+const tmCost=L=>Math.floor(25*Math.pow(2.35,L));
+const slotCost=L=>Math.floor(150*Math.pow(4,L));
+const idxMoney=(b,r)=>Math.floor(100*Math.pow(6,b)*Math.pow(2,r));
+const idxSpeed=(b,r)=>Math.floor(420*Math.pow(4.2,b)*Math.pow(1.5,r));
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// ---------- state ----------
+function newState(){
+  const slots=new Array(MAX_SLOTS).fill(null);
+  slots[0]={t:'pet',b:0,r:0,kg:1,s:1,mut:[]};
+  return {money:0,speed:0,tm:0,slotLv:0,slots,index:{'0-0':1},trails:[],trailEq:-1,money2:false,growth2:false,passes:[false,false,false],
+    traps:2,placed:[],startBonus:false,cheat:false,god:false,thieves:true,clock:0,lastSave:Date.now(),maxBiome:0,batEq:-1};
+}
+let S=newState();
+function load(){
+  try{const d=JSON.parse(localStorage.getItem(SAVE_KEY));if(d&&d.slots){S=Object.assign(newState(),d);while(S.slots.length<MAX_SLOTS)S.slots.push(null);return true}}catch(e){}
+  return false;
+}
+function save(){S.lastSave=Date.now();try{localStorage.setItem(SAVE_KEY,JSON.stringify(S))}catch(e){}}
+const nSlots=()=>Math.min(MAX_SLOTS,6+2*S.slotLv);
+const trailBonus=()=>S.trailEq>=0?TRAILS[S.trailEq].b:0;
+const effSpeed=()=>S.speed*(1+trailBonus());
+const isNight=()=>(S.clock%CYCLE)>=DAY_LEN;
+function rowDone(b){for(let r=0;r<8;r++)if(!S.index[b+'-'+r])return false;return true}
+function batTier(){let t=0;for(let b=0;b<NB;b++)if(rowDone(b))t++;return t}
+function curBat(){const t=batTier();return S.batEq>=0&&S.batEq<=t?S.batEq:t}
+function totalIncome(){let t=0;for(let i=0;i<nSlots();i++){const o=S.slots[i];if(o&&o.t==='pet')t+=income(o)}return t*(S.money2?2:1)}
+
+// ---------- runtime ----------
+const P={x:SPAWN.x,y:SPAWN.y,carry:null,stun:0,rot:0,face:1,swing:0,swingCd:0,kb:0,penWarn:false,moving:false};
+let ground=[],guards=[],thieves=[],rivals=[],parts=[],floats=[],eid=0;
+let resetT=RESET_EVERY,lockT=0,thiefT=100,thiefWarned=false,wasNight=false,shake=0;
+let tmPhase=0,tmAcc=0,tmCd=0,started=false,modal=null,modalArg=null,saveT=0,hudT=0;
+let decos=[];
+
+function genDecos(){
+  const R=mulberry(1234);decos=[];
+  for(let b=0;b<NB;b++){
+    const x0=BASE_W+b*BIO_W;
+    for(let i=0;i<34;i++){decos.push({x:x0+R()*BIO_W,y:R()*H,e:BIOMES[b].deco[Math.floor(R()*4)],s:22+R()*22})}
+  }
+}
+function spawnEggs(){
+  ground=[];
+  for(let b=0;b<NB;b++){
+    const x0=BASE_W+b*BIO_W;
+    for(let i=0;i<8;i++)ground.push(makeEgg(b,x0+rnd(90,BIO_W-90),rnd(60,H-60)));
+  }
+  spawnRivals();
+}
+function makeEgg(b,x,y,r){
+  if(r===undefined)r=wpick(RAR);
+  const s=wpick(SIZES),kg=+rnd(SIZES[s].min,SIZES[s].max).toFixed(2);
+  return {id:++eid,x,y,b,r,kg,s:sizeOf(kg),bob:Math.random()*6};
+}
+function spawnGuards(){
+  guards=BIOMES.map((B,b)=>({b,x:BASE_W+b*BIO_W+BIO_W*.55,y:H/2,hx:BASE_W+b*BIO_W+BIO_W*.55,hy:H/2,cd:0,chase:false,wt:0,wx:0,wy:0}));
+}
+function spawnRivals(){
+  rivals=[];
+  const n=1+Math.floor(Math.random()*3);
+  for(let i=0;i<n;i++){
+    const b=Math.floor(Math.random()*(Math.min(S.maxBiome,8)+1));
+    const x0=BASE_W+b*BIO_W;
+    rivals.push({b,x:x0+BIO_W-40,y:rnd(80,H-80),st:'go',stun:0,carry:null,tgt:null,life:0});
+  }
+}
+
+// ---------- toasts ----------
+function toast(t,ms=2200){
+  const d=document.createElement('div');d.className='toast';d.innerHTML=t;$('#toasts').appendChild(d);
+  setTimeout(()=>d.remove(),ms);
+  const all=$('#toasts').children;if(all.length>4)all[0].remove();
+}
+function floatT(x,y,t,c='#fff'){floats.push({x,y,t,c,life:1.3})}
+
+// ---------- actions ----------
+const inRect=(p,r,m=0)=>p.x>r.x-m&&p.x<r.x+r.w+m&&p.y>r.y-m&&p.y<r.y+r.h+m;
+const inPen=()=>inRect(P,ST.pen);
+const onTM=()=>inRect(P,ST.tm);
+const inBase=()=>P.x<BASE_W;
+function nearStation(){
+  if(inRect(P,ST.pen,15))return 'pen';
+  for(const k of ['shop','sell','fuse','sakura','index'])if(dist(P,ST[k])<80)return k;
+  return null;
+}
+function nearestEgg(){let best=null,bd=55;for(const e of ground){const d=dist(P,e);if(d<bd){bd=d;best=e}}return best}
+function action(){
+  if(modal||!started||P.stun>0)return;
+  if(onTM()&&!P.carry){tmTap();return}
+  if(P.carry){if(inPen())placeEgg(true);else dropEgg();return}
+  const e=nearestEgg();
+  if(e){
+    ground.splice(ground.indexOf(e),1);
+    P.carry={b:e.b,r:e.r,kg:e.kg,s:e.s,mut:[]};
+    toast(`🥚 <span style="color:${RAR[e.r].c}">${RAR[e.r].n}es ${BIOMES[e.b].n}-Ei</span> · ${String(e.kg).replace('.',',')} kg – ab in den Pen!`);
+    for(const rv of rivals)if(rv.tgt===e)rv.tgt=null;
+    return;
+  }
+  const st=nearStation();if(st)openModal(st);
+}
+function dropEgg(){if(!P.carry)return;ground.push({id:++eid,x:P.x,y:P.y+14,bob:0,...P.carry});P.carry=null}
+function placeEgg(manual){
+  let i=-1;for(let k=0;k<nSlots();k++)if(!S.slots[k]){i=k;break}
+  if(i<0){if(manual||!P.penWarn)toast('❌ Pen voll! Verkauf Pets oder kauf mehr Plätze im Shop.');P.penWarn=true;return}
+  const c=P.carry,tot=hatchTime(c.b,c.r,c.s,c.mut);
+  S.slots[i]={t:'egg',b:c.b,r:c.r,kg:c.kg,s:c.s,mut:c.mut||[],tot,left:tot};
+  P.carry=null;toast(`✅ Ei im Pen! Schlüpft in ${fmtT(tot)} <small>(nachts 30× schneller)</small>`);save();
+}
+function hatch(i){
+  const o=S.slots[i];if(!o||o.t!=='egg'||o.left>0)return;
+  S.slots[i]={t:'pet',b:o.b,r:o.r,kg:o.kg,s:o.s,mut:o.mut||[]};
+  const p=S.slots[i],key=o.b+'-'+o.r;
+  let msg=`🐣 ${petEmo(p)} <b>${petName(p)}</b> <span style="color:${RAR[p.r].c}">(${RAR[p.r].n})</span> · ${String(p.kg).replace('.',',')} kg · ${fmt(income(p)*(S.money2?2:1))}/s`;
+  toast(msg,3200);
+  if(!S.index[key]){
+    S.index[key]=1;const m=idxMoney(o.b,o.r),sp=idxSpeed(o.b,o.r);
+    S.money+=m;S.speed+=sp;
+    toast(`📖 Neu im Index! +💰${fmt(m)} · +⚡${fmt(sp)}`,3200);
+    if(rowDone(o.b))toast(`🏏 ${BIOMES[o.b].n}-Index komplett! Neuer Schläger: <b>${BATS[batTier()].n}</b>`,4000);
+  }
+  save();
+}
+function sellSlot(i){
+  const o=S.slots[i];if(!o)return;
+  const v=o.t==='pet'?income(o)*60:income(o)*20;
+  S.money+=v;S.slots[i]=null;toast(`💰 Verkauft für ${fmt(v)}`);save();
+}
+function swing(){
+  if(!started||modal||P.stun>0||P.swingCd>0)return;
+  P.swing=.25;P.swingCd=.55;
+  const kb=160+90*curBat();
+  for(const t of [...thieves,...rivals]){
+    if(dist(P,t)<95&&t.st!=='gone'){
+      const a=Math.atan2(t.y-P.y,t.x-P.x);
+      t.vx=Math.cos(a)*kb*3;t.vy=Math.sin(a)*kb*3;t.stun=t.isThief?2.5:4;t.rot=0;
+      if(t.carry){
+        if(t.isThief)returnItem(t);else{ground.push({id:++eid,x:t.x,y:t.y,bob:0,...t.carry});t.carry=null}
+        t.st=t.isThief?'flee':'go';
+      }
+      floatT(t.x,t.y-30,'BONK!','#facc15');shake=5;
+    }
+  }
+}
+function returnItem(t){
+  const it=t.carry;t.carry=null;
+  let i=(t.slot!=null&&!S.slots[t.slot]&&t.slot<nSlots())?t.slot:-1;
+  if(i<0)for(let k=0;k<nSlots();k++)if(!S.slots[k]){i=k;break}
+  if(i>=0){S.slots[i]=it;toast('🛡️ Zurückgeholt!')}
+  else{const v=it.t==='pet'?income(it)*60:income(it)*20;S.money+=v;toast('🛡️ Zurückgeholt – Pen voll, automatisch verkauft für '+fmt(v))}
+}
+function placeTrap(){
+  if(!started||modal)return;
+  if(P.x>BASE_W+300){toast('🪤 Fallen nur in/nahe deiner Basis!');return}
+  if(S.traps<=0){toast('🪤 Keine Fallen mehr – kauf welche im Shop.');return}
+  if(S.placed.length>=5){toast('🪤 Maximal 5 Fallen gleichzeitig.');return}
+  S.traps--;S.placed.push({x:P.x,y:P.y});toast('🪤 Bärenfalle aufgestellt');save();
+}
+function tmTap(){
+  if(tmCd>0)return;tmCd=.28;
+  const pos=(Math.sin(tmPhase)+1)/2,d=Math.abs(pos-.5);
+  if(d<.07){gainSteps(5);floatT(P.x,P.y-40,'PERFEKT! ×5','#22c55e')}
+  else if(d<.18){gainSteps(2);floatT(P.x,P.y-40,'Gut ×2','#facc15')}
+  else floatT(P.x,P.y-40,'Daneben','#f87171');
+}
+function gainSteps(n){const a=n*tmSteps(S.tm);S.speed+=a;floatT(P.x+rnd(-20,20),P.y-20,'+⚡'+fmt(a),'#7dd3fc')}
+function spawnThieves(){
+  const occ=[];for(let i=0;i<nSlots();i++)if(S.slots[i])occ.push(i);
+  if(!occ.length)return;
+  const n=1+Math.floor(Math.random()*3);
+  for(let k=0;k<n;k++){
+    const slot=occ[Math.floor(Math.random()*occ.length)];
+    thieves.push({isThief:true,x:BASE_W+120+k*40,y:rnd(150,H-150),st:'in',slot,carry:null,stun:0,vx:0,vy:0,rot:0});
+  }
+  toast(`🚨 ${n} Dieb${n>1?'e':''} greift deinen Pen an! Hau sie mit dem Schläger (Q)!`,3000);
+}
+function slotPos(i){const c=i%6,r=Math.floor(i/6);return {x:ST.pen.x+50+c*80,y:ST.pen.y+42+r*62}}
+
+// ---------- update ----------
+const keys={};let joy={x:0,y:0};
+function update(dt){
+  S.clock+=dt;
+  const night=isNight();
+  if(wasNight&&!night){
+    if(!inBase()){dropEgg();P.x=SPAWN.x;P.y=SPAWN.y;P.stun=0;toast('🌅 Die Nacht ist vorbei – du wurdest zur Basis teleportiert!',3000)}
+    else toast('🌅 Es ist wieder Tag.');
+  }
+  if(!wasNight&&night)toast('🌙 Nacht! Eier im Pen wachsen jetzt 30× schneller. Sei vor Sonnenaufgang in der Basis!',3200);
+  wasNight=night;
+  // eggs + money
+  const gm=(night?30:1)*(S.growth2?2:1);
+  for(let i=0;i<nSlots();i++){const o=S.slots[i];if(o&&o.t==='egg'&&o.left>0){o.left-=dt*gm;if(o.left<=0){o.left=0;toast(`🥚 Ein ${BIOMES[o.b].n}-Ei ist bereit zum Schlüpfen!`)}}}
+  S.money+=totalIncome()*dt;
+  // resets
+  if(lockT>0){lockT-=dt;if(lockT<=0){spawnEggs();toast('🥚 Neue Eier sind gespawnt!')}}
+  else{resetT-=dt;if(resetT<=0){resetT=RESET_EVERY;lockT=LOCK_TIME;ground=[];rivals=[];toast('🔄 Eier werden neu verteilt – Map 13 Sek. gesperrt!',3000)}}
+  // thieves timer
+  if(S.thieves){
+    thiefT-=dt;
+    if(thiefT<=8&&!thiefWarned){thiefWarned=true;toast('⚠️ Diebe kommen in 8 Sekunden!',2500)}
+    if(thiefT<=0){thiefT=rnd(90,170);thiefWarned=false;spawnThieves()}
+  }
+  // player
+  P.swing=Math.max(0,P.swing-dt);P.swingCd=Math.max(0,P.swingCd-dt);tmCd=Math.max(0,tmCd-dt);
+  if(P.stun>0){P.stun-=dt;P.rot+=dt*14;P.x+=P.kb*dt;P.kb*=Math.pow(.05,dt);if(P.stun<=0)P.rot=0}
+  else if(!modal){
+    let ix=0,iy=0;
+    if(keys.KeyA||keys.ArrowLeft)ix--;if(keys.KeyD||keys.ArrowRight)ix++;
+    if(keys.KeyW||keys.ArrowUp)iy--;if(keys.KeyS||keys.ArrowDown)iy++;
+    ix+=joy.x;iy+=joy.y;
+    const l=Math.hypot(ix,iy);
+    if(l>.1){
+      if(l>1){ix/=l;iy/=l}
+      const sp=speedPx(effSpeed())*(P.carry?SIZES[P.carry.s].carry:1);
+      P.x+=ix*sp*dt;P.y+=iy*sp*dt;if(Math.abs(ix)>.2)P.face=ix>0?1:-1;P.moving=true;
+      if(S.trailEq>=0&&Math.random()<.7){const T=TRAILS[S.trailEq];parts.push({x:P.x-ix*14+rnd(-6,6),y:P.y+12+rnd(-6,6),vx:rnd(-20,20),vy:rnd(-20,20),life:.7,c:T.col})}
+    }else P.moving=false;
+  }
+  P.x=clamp(P.x,15,WORLD_W-15);P.y=clamp(P.y,20,H-15);
+  if(lockT>0&&P.x<BASE_W+5&&P.x>BASE_W-20)P.x=BASE_W-20;
+  const pb=P.x<BASE_W?-1:Math.min(8,Math.floor((P.x-BASE_W)/BIO_W));
+  if(pb>S.maxBiome)S.maxBiome=pb;
+  if(P.carry&&inPen())placeEgg(false);
+  if(!inPen())P.penWarn=false;
+  // treadmill
+  const tm=onTM()&&!P.carry;
+  $('#tmUI').style.display=tm&&!modal?'block':'none';
+  if(tm){tmPhase+=dt*3.2;tmAcc+=dt;while(tmAcc>=1){tmAcc-=1;gainSteps(1)}}else tmAcc=0;
+  // guardians
+  let runShow=false;
+  for(const g of guards){
+    const x0=BASE_W+g.b*BIO_W;g.cd=Math.max(0,g.cd-dt);
+    const d=dist(g,P);
+    const chase=!S.god&&pb===g.b&&P.stun<=0&&g.cd<=0&&d<560;
+    g.chase=chase;
+    let tx,ty,sp;
+    if(chase){
+      const req=Math.max(BIOMES[g.b].req,25)*(P.carry?RAR[P.carry.r].g:1);
+      sp=speedPx(req)*.97;tx=P.x;ty=P.y;if(d<330)runShow=true;
+    }else{
+      g.wt-=dt;if(g.wt<=0){g.wt=rnd(1.5,4);g.wx=g.hx+rnd(-220,220);g.wy=g.hy+rnd(-220,220)}
+      tx=g.wx;ty=g.wy;sp=80;
+    }
+    const a=Math.atan2(ty-g.y,tx-g.x),dd=Math.hypot(tx-g.x,ty-g.y);
+    if(dd>3){const st=Math.min(dd,sp*dt);g.x+=Math.cos(a)*st;g.y+=Math.sin(a)*st}
+    g.x=clamp(g.x,x0+30,x0+BIO_W-30);g.y=clamp(g.y,40,H-30);
+    if(chase&&d<38){
+      P.stun=1.5;P.kb=-520;g.cd=2.5;shake=10;
+      if(P.carry){dropEgg();toast('💥 Erwischt! Du hast das Ei fallen lassen.')}else toast('💥 Der Wächter hat dich erwischt! Mehr ⚡ Speed trainieren!');
+    }
+  }
+  $('#run').style.display=runShow?'block':'none';
+  // thieves
+  for(const t of thieves){
+    if(t.stun>0){t.stun-=dt;t.rot+=dt*12;t.x+=t.vx*dt;t.y+=t.vy*dt;t.vx*=Math.pow(.02,dt);t.vy*=Math.pow(.02,dt);if(t.stun<=0){t.rot=0;if(t.st!=='gone')t.st='flee'}continue}
+    let tx,ty,sp=170;
+    if(t.st==='in'){
+      if(!S.slots[t.slot]){let alt=-1;for(let k=0;k<nSlots();k++)if(S.slots[k]){alt=k;break}if(alt<0){t.st='flee';continue}t.slot=alt}
+      const sp2=slotPos(t.slot);tx=sp2.x;ty=sp2.y;
+      if(Math.hypot(tx-t.x,ty-t.y)<14){t.carry=S.slots[t.slot];S.slots[t.slot]=null;t.st='out';toast(`😱 Ein Dieb hat dein ${t.carry.t==='pet'?petEmo(t.carry)+' '+petName(t.carry):BIOMES[t.carry.b].n+'-Ei'} geschnappt! Hinterher!`)}
+    }else{tx=BASE_W+800;ty=t.y;sp=t.carry?150:200}
+    const a=Math.atan2(ty-t.y,tx-t.x);t.x+=Math.cos(a)*sp*dt;t.y+=Math.sin(a)*sp*dt;
+    if(t.st!=='in'&&t.x>BASE_W+700){
+      if(t.carry){toast(`😭 Der Dieb ist mit deinem ${t.carry.t==='pet'?petName(t.carry):'Ei'} entkommen!`,3000);save()}
+      t.st='gone';
+    }
+    for(let k=S.placed.length-1;k>=0;k--){const tr=S.placed[k];if(Math.hypot(tr.x-t.x,tr.y-t.y)<26){
+      S.placed.splice(k,1);t.stun=5;t.vx=t.vy=0;floatT(t.x,t.y-30,'🪤 GEFANGEN!','#f87171');
+      if(t.carry){returnItem(t)}t.st='flee';save();}}
+  }
+  thieves=thieves.filter(t=>t.st!=='gone');
+  // rivals
+  for(const r of rivals){
+    r.life+=dt;
+    if(r.stun>0){r.stun-=dt;r.rot+=dt*12;r.x+=(r.vx||0)*dt;r.y+=(r.vy||0)*dt;r.vx*=Math.pow(.02,dt);r.vy*=Math.pow(.02,dt);if(r.stun<=0)r.rot=0;continue}
+    const sp=170+18*r.b;
+    if(r.st==='go'){
+      if(!r.tgt||!ground.includes(r.tgt)){let best=null,bv=0;for(const e of ground)if(e.b===r.b){const v=income(e);if(v>bv){bv=v;best=e}}r.tgt=best;if(!best){r.st='leave';continue}}
+      const a=Math.atan2(r.tgt.y-r.y,r.tgt.x-r.x);r.x+=Math.cos(a)*sp*dt;r.y+=Math.sin(a)*sp*dt;
+      if(dist(r,r.tgt)<12){ground.splice(ground.indexOf(r.tgt),1);r.carry={b:r.tgt.b,r:r.tgt.r,kg:r.tgt.kg,s:r.tgt.s};r.tgt=null;r.st='leave'}
+    }else{r.x+=sp*dt;r.y+=Math.sin(r.life*2)*30*dt;if(r.x>BASE_W+(r.b+1)*BIO_W+200)r.st='gone'}
+  }
+  rivals=rivals.filter(r=>r.st!=='gone');
+  // particles
+  for(const p of parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt}
+  parts=parts.filter(p=>p.life>0);if(parts.length>300)parts.splice(0,parts.length-300);
+  for(const f of floats){f.y-=40*dt;f.life-=dt}
+  floats=floats.filter(f=>f.life>0);
+  shake=Math.max(0,shake-dt*30);
+  saveT+=dt;if(saveT>5){saveT=0;save()}
+}
+
+// ---------- render ----------
+const cv=$('#c'),ctx=cv.getContext('2d');
+let W=0,HH=0,DPR=1,SC=1,camX=0,camY=0;
+function resize(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;HH=innerHeight;cv.width=W*DPR;cv.height=HH*DPR;cv.style.width=W+'px';cv.style.height=HH+'px';SC=clamp(Math.min(W/950,HH/(H+70)),.42,1.3)}
+addEventListener('resize',resize);
+function emo(e,x,y,s,a=1){ctx.globalAlpha=a;ctx.font=`${s}px ${EMOJI_FONT}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(e,x,y);ctx.globalAlpha=1}
+function txt(t,x,y,s,c='#fff',w='700'){ctx.font=`${w} ${s}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=Math.max(2,s/5);ctx.strokeStyle='rgba(0,0,0,.75)';ctx.strokeText(t,x,y);ctx.fillStyle=c;ctx.fillText(t,x,y)}
+function eggR(kg){return 10+5*Math.log2(1+kg)}
+function drawEgg(x,y,e,sc=1,t=0){
+  const ry=eggR(e.kg)*sc,rx=ry*.78,col=e.r===7?`hsl(${(t*120)%360},90%,70%)`:RAR[e.r].c;
+  ctx.save();
+  if(e.r>=4){ctx.shadowColor=col;ctx.shadowBlur=18}
+  const g=ctx.createRadialGradient(x-rx*.35,y-ry*.4,2,x,y,ry*1.1);
+  g.addColorStop(0,'#fff');g.addColorStop(.35,col);g.addColorStop(1,shade(col));
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;ctx.lineWidth=2;ctx.strokeStyle='rgba(0,0,0,.45)';ctx.stroke();
+  // spots
+  ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(x+rx*.3,y+ry*.2,rx*.18,ry*.12,0,0,7);ctx.fill();
+  ctx.restore();
+}
+function shade(c){if(c.startsWith('hsl'))return '#555';const n=parseInt(c.slice(1),16);const r=(n>>16)*.45,g=(n>>8&255)*.45,b=(n&255)*.45;return `rgb(${r|0},${g|0},${b|0})`}
+
+function render(t){
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.fillStyle='#0b1020';ctx.fillRect(0,0,W,HH);
+  const vw=W/SC,vh=HH/SC;
+  camX=clamp(P.x-vw/2,0,Math.max(0,WORLD_W-vw));
+  camY=vh>=H+40?-(vh-H)/2:clamp(P.y-vh/2,-50,H-vh+20);
+  const sx=shake?rnd(-shake,shake):0,sy=shake?rnd(-shake,shake):0;
+  ctx.setTransform(DPR*SC,0,0,DPR*SC,(-camX+sx)*DPR*SC,(-camY+sy)*DPR*SC);
+  const L=camX-50,R=camX+vw+50;
+  // base
+  if(L<BASE_W){
+    ctx.fillStyle='#5a9e4b';ctx.fillRect(0,0,BASE_W,H);
+    ctx.fillStyle='rgba(255,255,255,.05)';for(let x=0;x<BASE_W;x+=50)for(let y=(x/50%2)*50;y<H;y+=100)ctx.fillRect(x,y,50,50);
+    // pen
+    const p=ST.pen;ctx.fillStyle='#8b5a2b';ctx.fillRect(p.x-8,p.y-8,p.w+16,p.h+16);ctx.fillStyle='#c9a36b';ctx.fillRect(p.x,p.y,p.w,p.h);
+    txt('🥚 DEIN PEN',p.x+p.w/2,p.y-22,18,'#fff7d6','900');
+    for(let i=0;i<MAX_SLOTS;i++){
+      const q=slotPos(i),open=i<nSlots();
+      ctx.fillStyle=open?'rgba(255,255,255,.28)':'rgba(0,0,0,.15)';ctx.beginPath();ctx.roundRect(q.x-35,q.y-27,70,54,8);ctx.fill();
+      if(!open){emo('🔒',q.x,q.y,16,.5);continue}
+      const o=S.slots[i];if(!o)continue;
+      if(o.t==='egg'){
+        drawEgg(q.x,q.y-6,o,.7,t);
+        if(o.left<=0){txt('HATCH!',q.x,q.y+18,12,'#4ade80','900')}
+        else{ctx.fillStyle='#0008';ctx.fillRect(q.x-28,q.y+16,56,6);ctx.fillStyle=isNight()?'#a78bfa':'#22c55e';ctx.fillRect(q.x-28,q.y+16,56*(1-o.left/o.tot),6)}
+      }else{
+        emo(petEmo(o),q.x,q.y-6+Math.sin(t*3+i)*2,30);
+        txt(fmt(income(o)*(S.money2?2:1))+'/s',q.x,q.y+19,10,'#fde68a');
+        if(o.mut&&o.mut.length)emo(o.mut.includes('Spirit')?'👻':'🌸',q.x+26,q.y-20,12);
+      }
+    }
+    // treadmill
+    const m=ST.tm;ctx.fillStyle='#1f2937';ctx.beginPath();ctx.roundRect(m.x,m.y,m.w,m.h,10);ctx.fill();
+    ctx.fillStyle='#374151';for(let k=0;k<8;k++){const xx=m.x+10+((k*20+t*80)%(m.w-20));ctx.fillRect(xx,m.y+10,8,m.h-20)}
+    txt('🏃 LAUFBAND Lv.'+S.tm,m.x+m.w/2,m.y-14,14);
+    // stations
+    const stn=[['shop','🛒','SHOP'],['sell','💰','VERKAUFEN'],['fuse','🔮','FUSE'],['sakura','🌸','INKUBATOR'],['index','📖','INDEX']];
+    for(const [k,e,n] of stn){const s=ST[k];ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(s.x,s.y+30,40,12,0,0,7);ctx.fill();emo(e,s.x,s.y+Math.sin(t*2+s.x)*3,54);txt(n,s.x,s.y+50,13)}
+    // safe zone edge
+    ctx.fillStyle=lockT>0?'rgba(239,68,68,.6)':'rgba(255,255,255,.35)';ctx.fillRect(BASE_W-6,0,6,H);
+    if(lockT>0)txt('🔒 GESPERRT '+Math.ceil(lockT)+'s',BASE_W-80,H/2,16,'#fca5a5');
+    txt('🛡️ SAFE ZONE',150,H-22,14,'#e0ffe0');
+  }
+  // biomes
+  for(let b=0;b<NB;b++){
+    const x0=BASE_W+b*BIO_W;if(x0>R||x0+BIO_W<L)continue;
+    const B=BIOMES[b];ctx.fillStyle=B.c1;ctx.fillRect(x0,0,BIO_W,H);
+    ctx.fillStyle=B.c2;for(let x=x0;x<x0+BIO_W;x+=80)for(let y=((x-x0)/80%2)*80;y<H;y+=160)ctx.fillRect(x,y,80,80);
+    if(b===8){ctx.fillStyle='#fff';for(let k=0;k<70;k++){const sx2=x0+((k*997)%BIO_W),sy2=(k*571)%H;ctx.globalAlpha=.3+.3*Math.sin(t*2+k);ctx.fillRect(sx2,sy2,2,2)}ctx.globalAlpha=1}
+    // sign
+    const ok=effSpeed()>=B.req;
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.roundRect(x0+20,H/2-60,170,120,14);ctx.fill();
+    emo(B.e,x0+105,H/2-28,34);txt(B.n,x0+105,H/2+10,18);txt(B.req?'⚡ '+fmt(B.req):'⚡ kein Minimum',x0+105,H/2+36,15,ok?'#86efac':'#fca5a5');
+  }
+  for(const d of decos){if(d.x<L||d.x>R)continue;emo(d.e,d.x,d.y,d.s,.55)}
+  // traps
+  for(const tr of S.placed)if(tr.x>L&&tr.x<R)emo('🪤',tr.x,tr.y,28);
+  // eggs
+  for(const e of ground){if(e.x<L||e.x>R)continue;
+    ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(e.x,e.y+eggR(e.kg)*.9,eggR(e.kg)*.8,5,0,0,7);ctx.fill();
+    drawEgg(e.x,e.y+Math.sin(t*2+e.bob)*2,e,1,t);
+    if(dist(P,e)<160){txt(RAR[e.r].n,e.x,e.y-eggR(e.kg)-18,11,RAR[e.r].c);txt(String(e.kg).replace('.',',')+' kg',e.x,e.y-eggR(e.kg)-6,10,'#fff')}
+  }
+  // rivals
+  for(const r of rivals){if(r.x<L||r.x>R)continue;ctx.save();ctx.translate(r.x,r.y);ctx.rotate(r.rot||0);emo('🤖',0,0,34);ctx.restore();if(r.carry)drawEgg(r.x,r.y-30,r.carry,.6,t);if(r.stun>0)emo('💫',r.x,r.y-26,16)}
+  // thieves
+  for(const th of thieves){ctx.save();ctx.translate(th.x,th.y);ctx.rotate(th.rot||0);emo('🦹',0,0,38);ctx.restore();
+    if(th.carry){if(th.carry.t==='pet')emo(petEmo(th.carry),th.x,th.y-32,22);else drawEgg(th.x,th.y-32,th.carry,.6,t)}
+    if(th.stun>0)emo('💫',th.x,th.y-28,16);else txt('DIEB',th.x,th.y+26,10,'#fca5a5')}
+  // guardians
+  for(const g of guards){if(g.x<L-100||g.x>R+100)continue;
+    if(g.chase){ctx.fillStyle='rgba(239,68,68,.25)';ctx.beginPath();ctx.arc(g.x,g.y,48+Math.sin(t*10)*4,0,7);ctx.fill()}
+    emo(BIOMES[g.b].g,g.x,g.y,62);txt('WÄCHTER',g.x,g.y+42,11,'#fecaca')}
+  // particles
+  for(const p of parts){ctx.globalAlpha=Math.max(0,p.life/.7);ctx.fillStyle=p.c==='rainbow'?`hsl(${(t*300+p.x)%360},90%,65%)`:p.c;ctx.beginPath();ctx.arc(p.x,p.y,4,0,7);ctx.fill()}ctx.globalAlpha=1;
+  // player
+  ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.rot);
+  ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(0,18,16,5,0,0,7);ctx.fill();
+  const bob=P.moving?Math.sin(t*16)*2:0;
+  ctx.fillStyle='#2563eb';ctx.beginPath();ctx.roundRect(-13,-4+bob,26,22,8);ctx.fill();
+  ctx.fillStyle='#fcd9b6';ctx.beginPath();ctx.arc(0,-14+bob,13,0,7);ctx.fill();
+  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(-4+P.face*3,-15+bob,2,0,7);ctx.arc(4+P.face*3,-15+bob,2,0,7);ctx.fill();
+  ctx.fillStyle='#f59e0b';ctx.fillRect(-13,-28+bob,26,6);
+  // bat
+  const bat=BATS[curBat()];const sw=P.swing>0?(1-P.swing/.25):0;
+  ctx.save();ctx.translate(P.face*14,4);ctx.rotate(P.face*(-1.2+sw*2.6));ctx.fillStyle=bat.c;ctx.strokeStyle='#0008';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect(-3,-30,7,30,3);ctx.fill();ctx.stroke();ctx.restore();
+  ctx.restore();
+  if(P.carry)drawEgg(P.x,P.y-46,P.carry,.85,t);
+  if(P.stun>0)emo('💫',P.x,P.y-40,18);
+  if(P.swing>0){ctx.strokeStyle='rgba(255,255,255,.6)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(P.x,P.y,70,P.face>0?-1:Math.PI-1,P.face>0?1:Math.PI+1);ctx.stroke()}
+  for(const f of floats)txt(f.t,f.x,f.y,14,f.c);
+  // night
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  const ph=S.clock%CYCLE;let na=0;
+  if(ph>=DAY_LEN)na=.45;else if(ph>DAY_LEN-8)na=.45*(1-(DAY_LEN-ph)/8);
+  if(ph>=CYCLE-6)na=.45*((CYCLE-ph)/6);
+  if(na>0){ctx.fillStyle=`rgba(10,15,60,${na})`;ctx.fillRect(0,0,W,HH)}
+}
+
+// ---------- HUD ----------
+function initMini(){const m=$('#mini');m.innerHTML='';const base=document.createElement('div');base.style.cssText=`flex:${BASE_W};background:#5a9e4b`;m.appendChild(base);for(const B of BIOMES){const d=document.createElement('div');d.style.cssText=`flex:${BIO_W};background:${B.c1};border-left:1px solid #0006`;d.title=B.n;m.appendChild(d)}const p=document.createElement('div');p.id='miniP';m.appendChild(p)}
+function updHUD(){
+  $('#hMoney').innerHTML=`💰 ${fmt(S.money)} <small>+${fmt(totalIncome())}/s</small>`;
+  $('#hSpeed').innerHTML=`⚡ ${fmt(effSpeed())} <small>Speed</small>`;
+  let ready=0,eggs=0,pets=0;for(let i=0;i<nSlots();i++){const o=S.slots[i];if(!o)continue;if(o.t==='egg'){eggs++;if(o.left<=0)ready++}else pets++}
+  $('#hPen').innerHTML=`🐾 ${pets} · 🥚 ${eggs}${ready?` · <span style="color:#4ade80">${ready} bereit!</span>`:''} <small>/${nSlots()}</small>`;
+  const ph=S.clock%CYCLE;
+  $('#hDay').innerHTML=ph>=DAY_LEN?`🌙 Nacht · ${fmtT(CYCLE-ph)}`:`☀️ Nacht in ${fmtT(DAY_LEN-ph)}`;
+  $('#hReset').innerHTML=lockT>0?`🔒 Gesperrt ${Math.ceil(lockT)}s`:`🔄 Neue Eier ${fmtT(resetT)}`;
+  $('#miniP').style.left=`calc(${P.x/WORLD_W*100}% - 3px)`;
+  // hint
+  let h='';
+  if(!modal&&started&&P.stun<=0){
+    if(onTM()&&!P.carry)h='';
+    else if(P.carry)h=inPen()?'':'Bring das Ei in deinen 🥚 Pen! · E = ablegen';
+    else if(nearestEgg())h='E – Ei aufheben';
+    else{const st=nearStation();if(st)h='E – '+{pen:'Pen öffnen',shop:'Shop öffnen',sell:'Verkaufen',fuse:'Fuse Machine',sakura:'Sakura-Inkubator',index:'Index öffnen'}[st]}
+  }
+  $('#hint').style.display=h?'block':'none';$('#hint').textContent=h;
+  $('#bE').textContent=onTM()&&!P.carry?'👟':P.carry?'⬇️':nearestEgg()?'✋':'E';
+  if(onTM()){const pos=(Math.sin(tmPhase)+1)/2;$('#tmMark').style.left=`calc(${pos*100}% - 3px)`;$('#tmInfo').textContent=`+${fmt(tmSteps(S.tm))} Speed pro Runde · Perfekt = ×5`}
+}
+
+// ---------- modals ----------
+function openModal(k,arg){modal=k;modalArg=arg;$('#modalBg').style.display='flex';renderModal()}
+function closeModal(){modal=null;$('#modalBg').style.display='none';save()}
+function rarSpan(r){return `<span style="color:${RAR[r].c};font-weight:700">${RAR[r].n}</span>`}
+function mutHtml(m){return (m||[]).map(x=>`<span class="mut ${x==='Spirit'?'s':''}">${x==='Spirit'?'👻 Spirit':'🌸 Bloom'}</span>`).join('')}
+function renderModal(){
+  const T=$('#mTitle'),B=$('#mBody');let h='';
+  const mm=S.money2?2:1;
+  if(modal==='pen'){
+    T.textContent='🥚 Dein Pen';
+    const anyReady=S.slots.some((o,i)=>i<nSlots()&&o&&o.t==='egg'&&o.left<=0);
+    h+=`<p class="note">Eier schlüpfen mit der Zeit – nachts 30× schneller. Fertige Eier hier mit <b>Hatch</b> öffnen.</p>`;
+    if(anyReady)h+=`<button class="btn g" data-a="hatchAll" style="margin-bottom:10px">🐣 Alle schlüpfen lassen</button>`;
+    h+='<div class="grid">';
+    for(let i=0;i<nSlots();i++){
+      const o=S.slots[i];
+      if(!o){h+=`<div class="card" style="opacity:.45"><div class="em">⬜</div><b>Platz ${i+1}</b><small>leer</small></div>`;continue}
+      if(o.t==='egg'){
+        const pr=1-o.left/o.tot;
+        h+=`<div class="card" style="border-color:${RAR[o.r].c}"><div class="em">🥚</div><b>${BIOMES[o.b].n}-Ei</b>${rarSpan(o.r)}<small>${String(o.kg).replace('.',',')} kg · ${SIZES[o.s].n}</small><div>${mutHtml(o.mut)}</div>`+
+          (o.left<=0?`<button class="btn g" data-a="hatch" data-i="${i}">🐣 HATCH!</button>`:`<div class="bar"><i style="width:${pr*100}%"></i></div><small>⏳ ${fmtT(o.left/((isNight()?30:1)*(S.growth2?2:1)))}</small>`)+`</div>`;
+      }else{
+        h+=`<div class="card" style="border-color:${RAR[o.r].c}"><div class="em">${petEmo(o)}</div><b>${petName(o)}</b>${rarSpan(o.r)}<small>${String(o.kg).replace('.',',')} kg · ${BIOMES[o.b].n}</small><div>${mutHtml(o.mut)}</div><small style="color:#fde68a">💰 ${fmt(income(o)*mm)}/s</small></div>`;
+      }
+    }
+    h+='</div>';
+  }
+  else if(modal==='sell'){
+    T.textContent='💰 Sell Shop';
+    h+=`<p class="note">Pets bringen 60 Sek. ihres Einkommens, Eier etwas weniger. Platz schaffen für bessere Eier!</p>
+      <button class="btn r" data-a="sellCommon" style="margin-bottom:10px">Alle gewöhnlichen & ungewöhnlichen Pets verkaufen</button>`;
+    const list=[];for(let i=0;i<nSlots();i++)if(S.slots[i])list.push(i);
+    if(!list.length)h+='<p>Nichts zu verkaufen.</p>';
+    list.sort((a,b)=>income(S.slots[a])-income(S.slots[b]));
+    for(const i of list){const o=S.slots[i];const v=o.t==='pet'?income(o)*60:income(o)*20;
+      h+=`<div class="row"><div class="t"><b>${o.t==='pet'?petEmo(o)+' '+petName(o):'🥚 '+BIOMES[o.b].n+'-Ei'} · ${rarSpan(o.r)}</b><small>${String(o.kg).replace('.',',')} kg ${o.t==='pet'?'· '+fmt(income(o)*mm)+'/s':''} ${mutHtml(o.mut)}</small></div><button class="btn y" data-a="sell" data-i="${i}">Verkaufen ${fmt(v)}</button></div>`}
+  }
+  else if(modal==='shop'){
+    T.textContent='🛒 Shop';const tab=modalArg||'tm';
+    h+=`<div class="tabs">${[['tm','🏃 Laufband'],['base','🏠 Basis'],['trails','✨ Trails'],['boost','🚀 Boosts'],['weap','🏏 Waffen']].map(([k,n])=>`<button class="${tab===k?'on':''}" data-a="tab" data-i="${k}">${n}</button>`).join('')}</div>`;
+    if(tab==='tm'){
+      const c=tmCost(S.tm);
+      h+=`<div class="row"><div class="t"><b>🏃 Laufband Level ${S.tm}</b><small>Jetzt: +${fmt(tmSteps(S.tm))} Speed/Runde → nächstes Level: +${fmt(tmSteps(S.tm+1))}</small></div><button class="btn g" data-a="buyTm" ${S.money<c?'disabled':''}>Upgrade ${fmt(c)}</button></div>
+      <p class="note">Stell dich aufs Laufband in deiner Basis: jede Sekunde 1 Runde automatisch, mit perfektem Timing ×5!</p>`;
+    }else if(tab==='base'){
+      const c=slotCost(S.slotLv),max=nSlots()>=MAX_SLOTS;
+      h+=`<div class="row"><div class="t"><b>🏠 Basis-Upgrade</b><small>Pet-Plätze: ${nSlots()} → ${Math.min(MAX_SLOTS,nSlots()+2)} (max. ${MAX_SLOTS})</small></div><button class="btn g" data-a="buySlot" ${max||S.money<c?'disabled':''}>${max?'MAX':'Kaufen '+fmt(c)}</button></div>`;
+    }else if(tab==='trails'){
+      h+=`<p class="note">Trails sehen cool aus und geben Bonus-Speed (nur der ausgerüstete zählt).</p>`;
+      TRAILS.forEach((tr,i)=>{const own=S.trails.includes(i),eq=S.trailEq===i;
+        h+=`<div class="row"><div class="t"><b>${tr.n}-Trail <small>(${TRAIL_RAR[tr.r]})</small></b><small>+${Math.round(tr.b*100)}% Speed</small></div>${own?`<button class="btn ${eq?'':'p'}" data-a="eqTrail" data-i="${i}">${eq?'Ablegen':'Ausrüsten'}</button>`:`<button class="btn g" data-a="buyTrail" data-i="${i}" ${S.money<tr.c?'disabled':''}>Kaufen ${fmt(tr.c)}</button>`}</div>`});
+    }else if(tab==='boost'){
+      h+=`<p class="note">Alle Boosts gibt's nur mit Ingame-Geld – kein echtes Geld, keine Werbung. 🙌</p>`;
+      h+=`<div class="row"><div class="t"><b>🎁 Startbonus</b><small>Einmalig +10.000 Speed</small></div><button class="btn g" data-a="startBonus" ${S.startBonus?'disabled':''}>${S.startBonus?'Abgeholt ✓':'Abholen'}</button></div>`;
+      h+=`<div class="row"><div class="t"><b>💰 x2 Money</b><small>Pets verdienen dauerhaft doppelt</small></div><button class="btn g" data-a="money2" ${S.money2||S.money<2e5?'disabled':''}>${S.money2?'Gekauft ✓':'Kaufen '+fmt(2e5)}</button></div>`;
+      h+=`<div class="row"><div class="t"><b>🌱 x2 Growth</b><small>Eier schlüpfen dauerhaft doppelt so schnell</small></div><button class="btn g" data-a="growth2" ${S.growth2||S.money<3e5?'disabled':''}>${S.growth2?'Gekauft ✓':'Kaufen '+fmt(3e5)}</button></div>`;
+      PASSES.forEach((p,i)=>{h+=`<div class="row"><div class="t"><b>⚡ Speed-Pass ${p.n}</b><small>Einmalig</small></div><button class="btn g" data-a="pass" data-i="${i}" ${S.passes[i]||S.money<p.c?'disabled':''}>${S.passes[i]?'Gekauft ✓':'Kaufen '+fmt(p.c)}</button></div>`});
+    }else if(tab==='weap'){
+      const tc=Math.max(100,Math.floor(totalIncome()*20));
+      h+=`<div class="row"><div class="t"><b>🪤 3 Bärenfallen</b><small>Du hast ${S.traps} · Diebe stecken 5 Sek. fest und lassen alles fallen (Taste B)</small></div><button class="btn g" data-a="buyTraps" ${S.money<tc?'disabled':''}>Kaufen ${fmt(tc)}</button></div>`;
+      h+=`<p class="note">🏏 Schläger (Taste Q): Gegner werden zum Ragdoll und weggeschleudert. Neue Skins schaltest du frei, indem du den Index eines Bioms komplett machst – höhere Stufen schleudern weiter!</p>`;
+      const tier=batTier();
+      BATS.forEach((b,i)=>{const un=i<=tier;h+=`<div class="row"><div class="t"><b><span style="color:${b.c}">▮</span> ${b.n}</b><small>${i===0?'Start':'Index '+BIOMES[i-1].n+' komplett'} · Wurfweite ${160+90*i}</small></div>${un?`<button class="btn ${curBat()===i?'':'p'}" data-a="eqBat" data-i="${i}">${curBat()===i?'Ausgerüstet':'Ausrüsten'}</button>`:'<span>🔒</span>'}</div>`});
+    }
+  }
+  else if(modal==='fuse'){
+    T.textContent='🔮 Fuse Machine';
+    h+=`<p class="note">3 gleiche Pets → 1 Ei der nächsten Seltenheit. Kostet eine Gebühr. 25% Risiko, dass der Wurf schiefgeht und nur ein Ei der gleichen Stufe rauskommt.</p>`;
+    const g={};for(let i=0;i<nSlots();i++){const o=S.slots[i];if(o&&o.t==='pet'&&o.r<7){const k=o.b+'-'+o.r;(g[k]=g[k]||[]).push(i)}}
+    const ks=Object.keys(g).filter(k=>g[k].length>=3);
+    if(!ks.length)h+='<p>Du brauchst 3 gleiche Pets (gleiches Tier & Seltenheit) im Pen.</p>';
+    for(const k of ks){const ids=g[k].sort((a,b)=>S.slots[b].kg-S.slots[a].kg).slice(0,3);const o=S.slots[ids[0]];const fee=Math.floor(8*ids.reduce((s,i)=>s+income(S.slots[i]),0));
+      h+=`<div class="row"><div class="t"><b>3× ${petEmo(o)} ${petName(o)} (${rarSpan(o.r)})</b><small>→ Ei: ${rarSpan(o.r+1)} ${BIOMES[o.b].n} · ${g[k].length} vorhanden</small></div><button class="btn p" data-a="fuse" data-i="${k}" ${S.money<fee?'disabled':''}>Fusionieren ${fmt(fee)}</button></div>`}
+  }
+  else if(modal==='sakura'){
+    T.textContent='🌸 Sakura-Baum-Inkubator';
+    h+=`<p class="note">Gib einem Ei im Pen eine Mutation: 🌸 <b>Bloom</b> (97,5%, ×1,5 Einkommen) oder 👻 <b>Spirit</b> (2,5%, ×4 Einkommen). Ein Pet kann beide haben. Jede Mutation macht die Schlüpfzeit 25% länger.</p>`;
+    let any=false;
+    for(let i=0;i<nSlots();i++){const o=S.slots[i];if(!o||o.t!=='egg')continue;const full=o.mut.includes('Bloom')&&o.mut.includes('Spirit');any=true;const c=Math.floor(Math.max(50,income(o)*40));
+      h+=`<div class="row"><div class="t"><b>🥚 ${BIOMES[o.b].n}-Ei · ${rarSpan(o.r)}</b><small>${String(o.kg).replace('.',',')} kg ${mutHtml(o.mut)}</small></div><button class="btn p" data-a="incub" data-i="${i}" ${full||S.money<c?'disabled':''}>${full?'Voll':'Inkubieren '+fmt(c)}</button></div>`}
+    if(!any)h+='<p>Keine Eier im Pen.</p>';
+  }
+  else if(modal==='index'){
+    T.textContent='📖 Pet-Index';
+    let n=Object.keys(S.index).length;
+    h+=`<p class="note">${n}/72 Pets entdeckt. Jedes neue Pet gibt Geld + dauerhaften Speed. Biom komplett = neuer Schläger-Skin!</p><div class="idx">`;
+    for(let b=0;b<NB;b++){h+=`<div><b>${BIOMES[b].e} ${BIOMES[b].n}</b>${rowDone(b)?' ✅':''}</div>`;
+      for(let r=0;r<8;r++){const has=S.index[b+'-'+r];h+=`<div class="c ${has?'':'no'}" title="${has?PETS[b][r][1]+' – '+RAR[r].n:'??? – +'+fmt(idxMoney(b,r))+' 💰 / +'+fmt(idxSpeed(b,r))+' ⚡'}" style="border-bottom:3px solid ${RAR[r].c}">${has?PETS[b][r][0]:'❓'}</div>`}}
+    h+='</div>';
+  }
+  else if(modal==='settings'){
+    T.textContent='⚙️ Einstellungen';
+    h+=`<div class="row"><div class="t"><b>🦹 NPC-Diebe</b><small>Bots versuchen ab und zu, aus deinem Pen zu klauen</small></div><button class="btn ${S.thieves?'g':''}" data-a="togThieves">${S.thieves?'An':'Aus'}</button></div>
+      <div class="row"><div class="t"><b>💾 Speichern</b><small>Automatisch alle 5 Sek. im Browser</small></div><button class="btn" data-a="saveNow">Jetzt speichern</button></div>
+      <div class="row"><div class="t"><b>🗑️ Spielstand löschen</b><small>Alles zurücksetzen</small></div><button class="btn r" data-a="reset">Löschen</button></div>`;
+    if(!S.cheat)h+=`<div class="row"><div class="t"><b>🔑 Code eingeben</b></div><div><input type="text" id="code" placeholder="Code…" style="width:120px"> <button class="btn" data-a="code">OK</button></div></div>`;
+    else{
+      h+=`<h3>😎 Cheat-Menü</h3><div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${[['c_m1','💰 +1 Mio.'],['c_m2','💰 +1 Mrd.'],['c_m3','💰 Geld ×10'],['c_s1','⚡ +10 Mio. Speed'],['c_s2','⚡ +1 Mrd. Speed'],['c_eggs','🥚 Alle Eier fertig'],['c_night','🌙 Nacht starten'],['c_day','☀️ Tag'],['c_respawn','🔄 Eier neu spawnen'],['c_secret','✨ Secret-Ei hier'],['c_god',S.god?'🛡️ Godmode AUS':'🛡️ Godmode AN'],['c_index','📖 Index komplett'],['c_slots','🏠 Max. Plätze'],['c_thief','🚨 Diebe jetzt'],['c_traps','🪤 +10 Fallen'],['c_off','🔒 Cheats ausblenden']].map(([a,n])=>`<button class="btn p" data-a="${a}">${n}</button>`).join('')}
+      </div><p class="note" style="margin-top:10px">🌠 Teleport:</p><div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" data-a="c_tp" data-i="-1">🏠 Basis</button>${BIOMES.map((B,i)=>`<button class="btn" data-a="c_tp" data-i="${i}">${B.e} ${B.n}</button>`).join('')}</div>`;
+    }
+  }
+  B.innerHTML=h;
+}
+function act(a,i){
+  const mm=S.money2?2:1;
+  switch(a){
+    case 'hatch':hatch(+i);break;
+    case 'hatchAll':for(let k=0;k<nSlots();k++)hatch(k);break;
+    case 'sell':sellSlot(+i);break;
+    case 'sellCommon':{let n=0,v=0;for(let k=0;k<nSlots();k++){const o=S.slots[k];if(o&&o.t==='pet'&&o.r<=1){v+=income(o)*60;S.slots[k]=null;n++}}S.money+=v;toast(n?`💰 ${n} Pets verkauft für ${fmt(v)}`:'Keine passenden Pets.');break}
+    case 'tab':modalArg=i;break;
+    case 'buyTm':{const c=tmCost(S.tm);if(S.money>=c){S.money-=c;S.tm++;toast('🏃 Laufband Level '+S.tm+'!')}break}
+    case 'buySlot':{const c=slotCost(S.slotLv);if(S.money>=c&&nSlots()<MAX_SLOTS){S.money-=c;S.slotLv++;toast('🏠 Jetzt '+nSlots()+' Pet-Plätze!')}break}
+    case 'buyTrail':{const tr=TRAILS[+i];if(S.money>=tr.c){S.money-=tr.c;S.trails.push(+i);S.trailEq=+i;toast('✨ '+tr.n+'-Trail ausgerüstet!')}break}
+    case 'eqTrail':S.trailEq=S.trailEq===+i?-1:+i;break;
+    case 'startBonus':if(!S.startBonus){S.startBonus=true;S.speed+=1e4;toast('🎁 +10.000 Speed!')}break;
+    case 'money2':if(!S.money2&&S.money>=2e5){S.money-=2e5;S.money2=true;toast('💰 x2 Money aktiv!')}break;
+    case 'growth2':if(!S.growth2&&S.money>=3e5){S.money-=3e5;S.growth2=true;toast('🌱 x2 Growth aktiv!')}break;
+    case 'pass':{const p=PASSES[+i];if(!S.passes[+i]&&S.money>=p.c){S.money-=p.c;S.passes[+i]=true;S.speed+=p.v;toast('⚡ '+p.n+'!')}break}
+    case 'buyTraps':{const tc=Math.max(100,Math.floor(totalIncome()*20));if(S.money>=tc){S.money-=tc;S.traps+=3;toast('🪤 +3 Bärenfallen')}break}
+    case 'eqBat':S.batEq=+i;break;
+    case 'fuse':{
+      const [b,r]=i.split('-').map(Number);const ids=[];
+      for(let k=0;k<nSlots();k++){const o=S.slots[k];if(o&&o.t==='pet'&&o.b===b&&o.r===r)ids.push(k)}
+      ids.sort((x,y)=>S.slots[y].kg-S.slots[x].kg);const use=ids.slice(0,3);if(use.length<3)break;
+      const fee=Math.floor(8*use.reduce((s,k)=>s+income(S.slots[k]),0));if(S.money<fee)break;
+      S.money-=fee;const kg=+(use.reduce((s,k)=>s+S.slots[k].kg,0)/3).toFixed(2);
+      const fail=Math.random()<.25,nr=fail?r:r+1,s=sizeOf(kg),tot=hatchTime(b,nr,s,[]);
+      use.forEach(k=>S.slots[k]=null);S.slots[use[0]]={t:'egg',b,r:nr,kg,s,mut:[],tot,left:tot};
+      toast(fail?`💥 Der Wurf ging schief… nur ein ${RAR[nr].n}es Ei.`:`🔮 Fusion geglückt! ${RAR[nr].n}es ${BIOMES[b].n}-Ei im Pen!`,3000);break}
+    case 'incub':{
+      const o=S.slots[+i];if(!o||o.t!=='egg')break;const c=Math.floor(Math.max(50,income(o)*40));if(S.money<c)break;S.money-=c;
+      let m=Math.random()<.025?'Spirit':'Bloom';
+      if(o.mut.includes(m)){toast(`🌸 ${m} hat das Ei schon – leider kein Effekt.`);break}
+      o.mut.push(m);o.tot*=1.25;o.left*=1.25;toast(m==='Spirit'?'👻 WOW! SPIRIT-Mutation!':'🌸 Bloom-Mutation!',3000);break}
+    case 'togThieves':S.thieves=!S.thieves;thieves=[];break;
+    case 'saveNow':save();toast('💾 Gespeichert');break;
+    case 'reset':if(confirm('Wirklich ALLES löschen?')){localStorage.removeItem(SAVE_KEY);S=newState();P.x=SPAWN.x;P.y=SPAWN.y;P.carry=null;thieves=[];spawnEggs();toast('🗑️ Neustart')}break;
+    case 'code':{const v=($('#code').value||'').trim().toLowerCase();if(v==='till'){S.cheat=true;toast('😎 Cheat-Menü freigeschaltet!')}else toast('❌ Falscher Code');break}
+    case 'c_m1':S.money+=1e6;break;case 'c_m2':S.money+=1e9;break;case 'c_m3':S.money*=10;break;
+    case 'c_s1':S.speed+=1e7;break;case 'c_s2':S.speed+=1e9;break;
+    case 'c_eggs':for(let k=0;k<nSlots();k++){const o=S.slots[k];if(o&&o.t==='egg')o.left=0}toast('🥚 Alle Eier bereit!');break;
+    case 'c_night':S.clock=Math.floor(S.clock/CYCLE)*CYCLE+DAY_LEN;break;
+    case 'c_day':S.clock=Math.ceil((S.clock+.01)/CYCLE)*CYCLE;break;
+    case 'c_respawn':lockT=0;resetT=RESET_EVERY;spawnEggs();toast('🔄 Neue Eier!');break;
+    case 'c_secret':{const b=P.x<BASE_W?0:Math.min(8,Math.floor((P.x-BASE_W)/BIO_W));ground.push(makeEgg(b,P.x+50,P.y,7));toast('✨ Secret-Ei gespawnt!');break}
+    case 'c_god':S.god=!S.god;break;
+    case 'c_index':for(let b=0;b<NB;b++)for(let r=0;r<8;r++)S.index[b+'-'+r]=1;toast('📖 Index komplett!');break;
+    case 'c_slots':S.slotLv=12;break;
+    case 'c_thief':thiefT=0.01;thiefWarned=true;break;
+    case 'c_traps':S.traps+=10;break;
+    case 'c_off':S.cheat=false;break;
+    case 'c_tp':{const b=+i;P.carry=null;if(b<0){P.x=SPAWN.x;P.y=SPAWN.y}else{P.x=BASE_W+b*BIO_W+260;P.y=H/2}closeModal();return}
+  }
+  save();renderModal();
+}
+$('#mBody').addEventListener('click',e=>{const b=e.target.closest('button[data-a]');if(b&&!b.disabled)act(b.dataset.a,b.dataset.i)});
+$('#mClose').onclick=closeModal;
+$('#modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal()});
+$('#btnSet').onclick=()=>openModal('settings');
+$('#btnIdx').onclick=()=>openModal('index');
+$('#tmBtn').onclick=tmTap;
+
+// ---------- input ----------
+addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'){if(e.key==='Enter')act('code');return}
+  if(e.code==='Escape'){if(modal)closeModal();return}
+  if(modal)return;
+  keys[e.code]=true;
+  if(e.repeat)return;
+  if(e.code==='KeyE')action();
+  if(e.code==='Space'){e.preventDefault();if(onTM())tmTap();else action()}
+  if(e.code==='KeyQ')swing();
+  if(e.code==='KeyB')placeTrap();
+});
+addEventListener('keyup',e=>{keys[e.code]=false});
+addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
+// touch
+const isTouch=('ontouchstart' in window)||matchMedia('(pointer:coarse)').matches;
+if(isTouch){$('#touch').style.display='block';$('#tmBtn').innerHTML='👟 Tritt!'}
+(function(){
+  const J=$('#joy'),K=$('#joyK');let id=null,cx=0,cy=0;
+  J.addEventListener('pointerdown',e=>{id=e.pointerId;const r=J.getBoundingClientRect();cx=r.left+r.width/2;cy=r.top+r.height/2;J.setPointerCapture(id);mv(e)});
+  J.addEventListener('pointermove',e=>{if(e.pointerId===id)mv(e)});
+  const up=e=>{if(e.pointerId!==id)return;id=null;joy.x=joy.y=0;K.style.left='40px';K.style.top='40px'};
+  J.addEventListener('pointerup',up);J.addEventListener('pointercancel',up);
+  function mv(e){let dx=e.clientX-cx,dy=e.clientY-cy;const l=Math.hypot(dx,dy),m=50;if(l>m){dx=dx/l*m;dy=dy/l*m}joy.x=dx/m;joy.y=dy/m;K.style.left=(40+dx)+'px';K.style.top=(40+dy)+'px'}
+})();
+$('#bE').addEventListener('pointerdown',e=>{e.preventDefault();action()});
+$('#bQ').addEventListener('pointerdown',e=>{e.preventDefault();swing()});
+$('#bB').addEventListener('pointerdown',e=>{e.preventDefault();placeTrap()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
+addEventListener('beforeunload',save);
+
+// ---------- start ----------
+let last=performance.now(),mt=0;
+function loop(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(started)update(dt);
+  render(now/1000);
+  hudT+=dt;if(hudT>.1){hudT=0;updHUD()}
+  if(modal){mt+=dt;if(mt>.5&&(modal==='pen')){mt=0;renderModal()}}
+  requestAnimationFrame(loop);
+}
+(function init(){
+  resize();genDecos();spawnGuards();initMini();$('#ver').textContent='v'+VERSION;
+  const had=load();
+  if(had){
+    const off=Math.min(86400,(Date.now()-S.lastSave)/1000);
+    if(off>10){
+      const inc=totalIncome()*off;S.money+=inc;
+      const gm=S.growth2?2:1;for(const o of S.slots)if(o&&o.t==='egg')o.left=Math.max(0,o.left-off*gm);
+      $('#offlineMsg').textContent=`💤 Du warst ${fmtT(off)} weg – deine Pets haben ${fmt(inc)} 💰 verdient!`;
+    }
+  }
+  spawnEggs();
+  $('#playBtn').onclick=()=>{$('#welcome').style.display='none';started=true;save();if(!had)toast('👋 Lauf nach rechts in den Wald, schnapp dir ein Ei und bring es in deinen Pen!',4500)};
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
