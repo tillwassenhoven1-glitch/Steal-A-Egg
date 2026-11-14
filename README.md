@@ -6,37 +6,38 @@ Ein 3D-Eier-Klau-Tycoon im Browser – ähnlich wie das Roblox-Spiel „Steal an
 
 **https://tillwassenhoven1-glitch.github.io/Steal-A-Egg/**
 
-Keine Installation, kein Konto nötig – läuft auf Handy, iPad und PC. 🎮
+Keine Installation nötig – läuft auf Handy, iPad und PC. 🎮
 Keine Werbung, kein Echtgeld-Shop. 🙌
 
 ## So funktioniert's
 
 - 🗺️ Lauf durch 9 Biome – vom Wald bis in den Kosmos
-- 🥚 Schnapp dir ein Ei (**E**) und bring es in deinen Pen (Safe Zone)
-- 👹 Jedes Biom hat einen Wächter – sobald du ein Ei trägst, jagt er dich. Ist dein Speed zu niedrig, erwischt er dich und du lässt das Ei fallen. **RUN!!**
-- ⚖️ Große Eier machen dich langsamer, seltene Eier machen den Wächter schneller
+- 🥚 Klau ein Ei aus einem Nest (**E**) und bring es in deinen Pen (Safe Zone)
+- 👹 Jedes Biom hat einen schlafenden Wächter – sobald du ein Ei nimmst, wacht er auf und jagt dich. **RUN!!**
+- ⚡ Hast du den empfohlenen Speed des Bioms, entkommst du – schwere Titan-Eier brauchen mehr
 - 🐣 Im Pen schlüpfen die Eier – danach verdienen deine Pets Geld pro Sekunde, auch offline
-- 🏃 Trainiere auf dem Laufband, um schneller zu werden und neue Biome zu erreichen
+- 🏃 Trainiere auf dem Laufband, um schneller zu werden und neue Biome zu schaffen
 
 ## Features
 
-- 🌲 9 Biome: Wald, See, Wüste, Dschungel, Schnee, Vulkan, Abyss Ocean, Prähistorisch, Kosmisch
-- 🐾 72 Pets in 8 Seltenheiten (bis Secret) – je schwerer, desto mehr Geld
-- 🌙 Tag & Nacht: nachts wachsen Eier 30× schneller – aber sei vor Sonnenaufgang zurück!
+- 🌲 9 Biome: Wald, See, Wüste, Dschungel, Schnee, Vulkan, Abyss Ocean, Prähistorisch, Kosmisch – mit Schnee, Glut, Blasen & Sternen
+- 🐾 72 Pets als 3D-Modelle, Einkommen wie im Original (Huhn 1 $/s … Einhorn 1 Mrd./s)
+- ⚖️ 5 Ei-Größen bis Titan – je schwerer, desto mehr Geld
+- 🌙 Tag & Nacht: nachts wachsen Eier 30× schneller
 - 🔄 Alle 5 Minuten neue Eier (Map 13 Sek. gesperrt)
+- 🏃 8 Laufbänder, 10 Trails & Speed-Multiplikator
 - 🌸 Sakura-Inkubator: Mutationen Bloom (97,5 %) & Spirit (2,5 %)
-- 🔮 Fuse Machine: 3 gleiche Pets → Ei der nächsten Stufe
+- 🔮 Fuse Machine: 3 gleiche Pets → Ei des nächsten Tiers
 - 📖 Pet-Index: jedes neue Pet gibt Geld + Speed, volles Biom = neuer Schläger-Skin
 - 🦹 NPC-Diebe greifen deinen Pen an – wehr dich mit 🏏 Schläger und 🪤 Bärenfalle
-- 🤖 Bots laufen zu den besten Eiern – wer ist schneller?
-- ✨ 10 Trails (Common bis Divine) mit Bonus-Speed
-- 🚀 Boosts (x2 Money, x2 Growth, Speed-Pässe) – nur mit Ingame-Geld
-- 💾 Speichert automatisch im Browser
+- 🤖 Bots rennen zu den besten Eiern – wer ist schneller?
+- ☁️ Konto mit Google oder E-Mail – Spielstand auf jedem Gerät (oder per Spielstand-Code)
+- 🎨 Grafik-Einstellung für schwache Handys
 
 ## Steuerung
 
 - 💻 **WASD** laufen · **Maus ziehen** Kamera drehen · **Mausrad** Zoom
-- 💻 **E** aufheben/benutzen · **Q** Schläger · **B** Falle · **Leertaste** springen / Laufband
+- 💻 **E** Ei klauen/benutzen · **Q** Schläger · **B** Falle · **Leertaste** springen / Laufband
 - 📱 Joystick links, Kamera mit dem Finger ziehen, Knöpfe rechts
 
 ---
