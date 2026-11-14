@@ -29,7 +29,9 @@ Keine Werbung, kein Echtgeld-Shop. 🙌
 - 🌸 Sakura-Inkubator: Mutationen Bloom (97,5 %) & Spirit (2,5 %)
 - 🔮 Fuse Machine: 3 gleiche Pets → Ei des nächsten Tiers
 - 📖 Pet-Index: jedes neue Pet gibt Geld + Speed, volles Biom = neuer Schläger-Skin
-- 🦹 NPC-Diebe greifen deinen Pen an – wehr dich mit 🏏 Schläger und 🪤 Bärenfalle
+- 🏏 Baseballschläger: hau Bots und Wächter weg (Q oder Mausklick)
+- 🐣 Fertige Eier schlüpfen direkt mit **E**, wenn du davor stehst
+- ⏸️ Pause-Menü mit **Esc**
 - 🤖 Bots rennen zu den besten Eiern – wer ist schneller?
 - ☁️ Konto mit Google oder E-Mail – Spielstand auf jedem Gerät (oder per Spielstand-Code)
 - 🎨 Grafik-Einstellung für schwache Handys
@@ -37,7 +39,7 @@ Keine Werbung, kein Echtgeld-Shop. 🙌
 ## Steuerung
 
 - 💻 **WASD** laufen · **Maus ziehen** Kamera drehen · **Mausrad** Zoom
-- 💻 **E** Ei klauen/benutzen · **Q** Schläger · **B** Falle · **Leertaste** springen / Laufband
+- 💻 **E** Ei klauen/benutzen · **Q / Klick** Schläger · **Esc** Pause · **Leertaste** springen / Laufband
 - 📱 Joystick links, Kamera mit dem Finger ziehen, Knöpfe rechts
 
 ---

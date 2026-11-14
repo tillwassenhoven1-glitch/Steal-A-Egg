@@ -89,7 +89,7 @@ h3{margin:14px 0 8px}
 </div>
 <div id="mini" class="hud"></div>
 <div id="hudR" class="hud">
-  <div id="btnRow"><button class="ib" id="btnAcc" title="Konto">👤</button><button class="ib" id="btnIdx" title="Index">📖</button><button class="ib" id="btnSet" title="Einstellungen">⚙️</button></div>
+  <div id="btnRow"><button class="ib" id="btnPause" title="Pause (Esc)">⏸️</button><button class="ib" id="btnAcc" title="Konto">👤</button><button class="ib" id="btnIdx" title="Index">📖</button><button class="ib" id="btnSet" title="Einstellungen">⚙️</button></div>
   <div class="pill" id="hDay">☀️</div>
   <div class="pill" id="hReset">🔄</div>
 </div>
@@ -109,7 +109,6 @@ h3{margin:14px 0 8px}
   <button class="tb" id="bE">E</button>
   <button class="tb" id="bQ">🏏</button>
   <button class="tb" id="bJ">⤴️</button>
-  <button class="tb" id="bB">🪤</button>
 </div>
 
 <div id="modalBg"><div id="modal">
@@ -120,7 +119,7 @@ h3{margin:14px 0 8px}
 <div id="welcome">
   <h1>🥚 Steal an Egg</h1>
   <p>Klau Eier aus 9 Biomen, renn vor den Wächtern weg und bring sie in deinen Pen. Lass sie schlüpfen und deine Pets Geld verdienen!</p>
-  <p style="font-size:14px">💻 WASD laufen · Maus ziehen = Kamera · Mausrad = Zoom<br><b>E</b> Ei klauen/benutzen · <b>Q</b> Schläger · <b>B</b> Bärenfalle · <b>Leertaste</b> springen / Laufband<br>📱 Joystick links, Kamera mit dem Finger ziehen, Knöpfe rechts</p>
+  <p style="font-size:14px">💻 WASD laufen · Maus ziehen = Kamera · Mausrad = Zoom<br><b>E</b> Ei klauen/benutzen · <b>Q / Klick</b> Schläger · <b>Esc</b> Pause · <b>Leertaste</b> springen / Laufband<br>📱 Joystick links, Kamera mit dem Finger ziehen, Knöpfe rechts</p>
   <button id="playBtn">▶️ Spielen</button>
   <div id="wAcc"></div>
   <p id="offlineMsg" style="color:#facc15;font-weight:700"></p>
@@ -296,6 +295,7 @@ const inPen=()=>inRect(P,ST.pen);
 const onTM=()=>inRect(P,ST.tm);
 const inBase=()=>P.x<BASE_W;
 function nearStation(){if(inRect(P,ST.pen,15))return 'pen';for(const k of ['shop','sell','fuse','sakura','index'])if(dist(P,ST[k])<85)return k;return null}
+function readySlotNear(){if(!inRect(P,ST.pen,10))return -1;let best=-1,bd=70;for(let i=0;i<nSlots();i++){const o=S.slots[i];if(!o||o.t!=='egg'||o.left>0)continue;const d=dist(P,slotPos(i));if(d<bd){bd=d;best=i}}return best}
 function nearestEgg(){let best=null,bd=60+0;for(const e of ground){const d=dist(P,e)-eggScale(e)*12;if(d<bd){bd=d;best=e}}return best}
 const eggLabel=o=>`${RAR[rarOf(o)].n}es ${BIOMES[o.b].n}-Ei`;
 function action(){
@@ -311,6 +311,7 @@ function action(){
     for(const rv of rivals)if(rv.tgt===e)rv.tgt=null;
     return;
   }
+  const hs=readySlotNear();if(hs>=0){hatch(hs);return}
   const st=nearStation();if(st)openModal(st);
 }
 function dropEgg(){if(!P.carry)return;ground.push({id:++eid,x:P.x+Math.cos(P.face)*30,y:clamp(P.y+Math.sin(P.face)*30,30,H-30),...P.carry});P.carry=null}
@@ -345,7 +346,10 @@ function swing(){
       floatT(t.x,t.y,'BONK!','#facc15',4);shake=.4;
     }
   }
+  for(const g of guards){if(dist(P,g)<130){const a=Math.atan2(g.y-P.y,g.x-P.x);g.x+=Math.cos(a)*kb*.8;g.y+=Math.sin(a)*kb*.8;g.cd=1.5;g.awake=false;g.alert=0;floatT(g.x,g.y,'BONK!','#facc15',6);shake=.5;burst(g.x,g.y,'#facc15')}}
+  swingFx=.25;
 }
+let swingFx=0;
 function returnItem(t){
   const it=t.carry;t.carry=null;
   let i=(t.slot!=null&&!S.slots[t.slot]&&t.slot<nSlots())?t.slot:-1;
@@ -389,7 +393,7 @@ function update(dt){
   S.money+=totalIncome()*dt;
   if(lockT>0){lockT-=dt;if(lockT<=0){spawnEggs();toast('🥚 Neue Eier sind gespawnt!')}}
   else{resetT-=dt;if(resetT<=0){resetT=RESET_EVERY;lockT=LOCK_TIME;for(const e of ground)removeEggMesh(e);ground=[];for(const r of rivals)removeEnt(r);rivals=[];toast('🔄 Eier werden neu verteilt – Map 13 Sek. gesperrt!',3000)}}
-  if(S.thieves){thiefT-=dt;if(thiefT<=8&&!thiefWarned){thiefWarned=true;toast('⚠️ Diebe kommen in 8 Sekunden!',2500)}if(thiefT<=0){thiefT=rnd(90,170);thiefWarned=false;spawnThieves()}}
+  if(false){thiefT-=dt;if(thiefT<=8&&!thiefWarned){thiefWarned=true;toast('⚠️ Diebe kommen in 8 Sekunden!',2500)}if(thiefT<=0){thiefT=rnd(90,170);thiefWarned=false;spawnThieves()}}
   // player
   P.swing=Math.max(0,P.swing-dt);P.swingCd=Math.max(0,P.swingCd-dt);tmCd=Math.max(0,tmCd-dt);
   P.vh-=30*dt;P.h+=P.vh*dt;if(P.h<0){P.h=0;P.vh=0}
@@ -724,18 +728,19 @@ function removeEggMesh(e){const m=eggMeshes.get(e.id);if(m){scene.remove(m);eggM
 
 // --- Welt ---
 const gateSigns=[],animMats=[],floaters=[],clouds=[];
-function grassField(x0,z0,w,d,n,colors,seed){
+function grassField(x0,z0,w,d,n,colors,seed,excl=[]){
   if(LOW)n=Math.floor(n/5);
   const R=mulberry(seed);const geo=new THREE.ConeGeometry(.09,.55,3);geo.translate(0,.27,0);
   const im=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({roughness:.9}),n);const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),e=new THREE.Euler(),col=new THREE.Color(),v=new THREE.Vector3(),sv=new THREE.Vector3();
-  for(let i=0;i<n;i++){e.set((R()-.5)*.4,R()*6,(R()-.5)*.4);q.setFromEuler(e);const s=.6+R()*.9;v.set(x0+R()*w,0,z0+R()*d);sv.set(s,s,s);m4.compose(v,q,sv);im.setMatrixAt(i,m4);col.set(colors[Math.floor(R()*colors.length)]);im.setColorAt(i,col)}
+  for(let i=0;i<n;i++){e.set((R()-.5)*.4,R()*6,(R()-.5)*.4);q.setFromEuler(e);let s=.6+R()*.9;let tries=0;do{v.set(x0+R()*w,0,z0+R()*d);tries++}while(tries<8&&excl.some(r=>v.x>r[0]&&v.x<r[0]+r[2]&&v.z>r[1]&&v.z<r[1]+r[3]));if(tries>=8&&excl.some(r=>v.x>r[0]&&v.x<r[0]+r[2]&&v.z>r[1]&&v.z<r[1]+r[3]))s=0;sv.set(s,s,s);m4.compose(v,q,sv);im.setMatrixAt(i,m4);col.set(colors[Math.floor(R()*colors.length)]);im.setColorAt(i,col)}
   im.receiveShadow=true;scene.add(im);
 }
 function buildWorld(){
   const R=mulberry(4242);
   const bt=noiseTex('#62b252','#4f9a41',1,true);bt.repeat.set(BASE_W*K/10,H*K/10);
   const base=new THREE.Mesh(new THREE.PlaneGeometry(BASE_W*K,H*K),new THREE.MeshStandardMaterial({map:bt,roughness:.95}));base.rotation.x=-Math.PI/2;base.position.set(BASE_W*K/2,0,H*K/2);base.receiveShadow=true;scene.add(base);
-  grassField(1,1,BASE_W*K-2,H*K-2,2500,['#4caf50','#66bb6a','#43a047','#7cb342'],9);
+  const ex=[[ST.pen.x*K-1,ST.pen.y*K-1,ST.pen.w*K+2,ST.pen.h*K+2],[ST.tm.x*K-.5,ST.tm.y*K-.5,ST.tm.w*K+1,ST.tm.h*K+1]];for(const k of ['shop','sell','fuse','sakura','index'])ex.push([ST[k].x*K-3,ST[k].y*K-3,6,6]);ex.push([SPAWN.x*K+2,SPAWN.y*K-8,30,4]);
+  grassField(1,1,BASE_W*K-2,H*K-2,2500,['#4caf50','#66bb6a','#43a047','#7cb342'],9,ex);
   for(let b=0;b<NB;b++){
     const B=BIOMES[b],x0=(BASE_W+b*BIO_W)*K,w=BIO_W*K;
     const tx=noiseTex(B.c1,B.c2,b+11,b!==4);tx.repeat.set(w/10,H*K/10);
@@ -789,14 +794,16 @@ function makeDeco(b,R){
 const slotVis=[];let tmBelt=null;const stationLbl={};
 function buildBase(){
   const p=ST.pen,px=p.x*K,pz=p.y*K,pw=p.w*K,ph=p.h*K;
-  scene.add(at(box(pw,.25,ph,'#d9b98a'),px+pw/2,.12,pz+ph/2));
+  {const c=document.createElement('canvas');c.width=c.height=128;const g=c.getContext('2d');for(let i=0;i<8;i++){g.fillStyle=['#c89a62','#bf8f57','#d1a56c','#b98a52'][i%4];g.fillRect(0,i*16,128,16);g.fillStyle='rgba(0,0,0,.18)';g.fillRect(0,i*16+15,128,1);g.fillRect((i*37)%128,i*16,1,16)}
+   const tx=new THREE.CanvasTexture(c);tx.wrapS=tx.wrapT=THREE.RepeatWrapping;tx.repeat.set(pw/4,ph/4);tx.colorSpace=THREE.SRGBColorSpace;
+   const fl=new THREE.Mesh(new THREE.BoxGeometry(pw,.1,ph),new THREE.MeshStandardMaterial({map:tx,roughness:.85}));fl.position.set(px+pw/2,.05,pz+ph/2);fl.receiveShadow=true;scene.add(fl)}
   const fence=(x1,z1,x2,z2)=>{const len=Math.hypot(x2-x1,z2-z1),n=Math.max(2,Math.round(len/1.6));for(let i=0;i<=n;i++){const t=i/n;scene.add(at(box(.3,1.4,.3,'#6d4527'),x1+(x2-x1)*t,.7,z1+(z2-z1)*t))}
     const rail=box(len,.18,.12,'#8b5a2b');rail.position.set((x1+x2)/2,1,(z1+z2)/2);rail.rotation.y=-Math.atan2(z2-z1,x2-x1);scene.add(rail);const r2=rail.clone();r2.position.y=.5;scene.add(r2)};
   fence(px,pz,px+pw,pz);fence(px,pz+ph,px+pw,pz+ph);fence(px,pz,px,pz+ph);fence(px+pw,pz,px+pw,pz+ph*.3);fence(px+pw,pz+ph*.7,px+pw,pz+ph);
   const pl=textSprite('🥚 DEIN PEN','#fff7d6',1.6);pl.position.set(px+pw/2,3.2,pz-1);scene.add(pl);
   for(let i=0;i<MAX_SLOTS;i++){
-    const q=slotPos(i);const pad=at(box(3.4,.18,2.6,'#8bc34a'),q.x*K,.3,q.y*K);pad.castShadow=false;scene.add(pad);
-    const holder=new THREE.Group();holder.position.set(q.x*K,.4,q.y*K);holder.rotation.y=-Math.PI/2;scene.add(holder);
+    const q=slotPos(i);scene.add(at(box(3.6,.12,2.8,'#7a5230'),q.x*K,.11,q.y*K));const pad=at(box(3.2,.14,2.4,'#7cb342'),q.x*K,.14,q.y*K);pad.castShadow=false;scene.add(pad);
+    const holder=new THREE.Group();holder.position.set(q.x*K,.21,q.y*K);holder.rotation.y=-Math.PI/2;scene.add(holder);
     const lbl=textSprite('','#fde68a',.7);lbl.position.set(q.x*K,3.1,q.y*K);scene.add(lbl);
     const lock=textSprite('🔒','#fff',.8);lock.position.set(q.x*K,.9,q.y*K);scene.add(lock);
     slotVis.push({pad,holder,lbl,lock,key:null,model:null});
@@ -829,7 +836,7 @@ function syncSlots(t){
   const N=nSlots(),mm=S.money2?2:1;
   for(let i=0;i<MAX_SLOTS;i++){
     const v=slotVis[i],o=i<N?S.slots[i]:null,open=i<N;
-    v.lock.visible=!open;v.pad.material=mat(open?'#8bc34a':'#6b5a3a');
+    v.lock.visible=!open;v.pad.material=mat(open?(S.slots[i]&&S.slots[i].t==='egg'&&S.slots[i].left<=0?'#facc15':'#7cb342'):'#5b4a32');
     const k=slotKey(o);
     if(k!==v.key){v.key=k;while(v.holder.children.length)v.holder.remove(v.holder.children[0]);v.model=null;
       if(o&&o.t==='egg')v.holder.add(makeEggMesh(o,.75));
@@ -856,6 +863,7 @@ function batMesh(){const g=new THREE.Group();const m=at(box(.25,1.6,.25,BATS[0].
 function buildEntities(){
   player=makeAvatar({head:'#f5c542',torso:'#2563eb',arms:'#f5c542',legs:'#1e3a8a',face:'smile',hair:'#4e342e'});
   scene.add(player.g);player.bat=batMesh();player.armR.add(player.bat);
+  player.arc=new THREE.Mesh(new THREE.RingGeometry(1.2,3,20,1,-1.2,2.4),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.6,side:THREE.DoubleSide,depthWrite:false}));player.arc.rotation.x=-Math.PI/2;player.arc.position.y=1.6;player.arc.visible=false;player.g.add(player.arc);
   guardsVis=BIOMES.map((B,b)=>{
     const redEye=new THREE.MeshStandardMaterial({color:0xff2020,emissive:0xff0000,emissiveIntensity:1});
     const P0=PET(B.g.b,B.g.p);const m=buildPet(P0[4],redEye);const s=clamp(6.5/m.ud.H,2.2,5.5);m.g.scale.multiplyScalar(s);
@@ -871,7 +879,8 @@ function syncEnts(t,dt){
   const lie=P.stun>0?Math.min(1,(1.6-P.stun)*5):0;
   placeAvatar(player,P,P.h,lie);if(P.stun>0)player.g.rotation.y+=t*8;
   player.swinging=P.swing>0;
-  if(P.swing>0){const k=1-P.swing/.3;player.armR.rotation.z=Math.PI*.9-k*Math.PI*1.1;player.armR.rotation.x=-.6+k*1.2}else player.armR.rotation.x=0;
+  if(P.swing>0){const k=1-P.swing/.3;player.armR.rotation.set(0,1.4-k*2.8,Math.PI/2)}else{player.armR.rotation.x=0;player.armR.rotation.y=0}
+  player.arc.visible=swingFx>0;player.arc.material.opacity=swingFx*2.4;swingFx=Math.max(0,swingFx-dt);
   setCarry(player,P.carry);player.bat.visible=!P.carry;player.bat.userData.m.material=mat(BATS[curBat()].c);
   animAvatar(player,P.moving,P.walk);
   for(let i=0;i<NB;i++){
@@ -986,11 +995,12 @@ function updHUD(){
   if(!modal&&started&&P.stun<=0){
     if(onTM()&&!P.carry)h='';
     else if(P.carry)h=inPen()?'':'🏃 Bring das Ei in deinen Pen! · E = ablegen';
+    else if(readySlotNear()>=0)h='E – Ei schlüpfen lassen 🐣';
     else if(nearestEgg())h='E – Ei klauen';
     else{const st=nearStation();if(st)h='E – '+{pen:'Pen öffnen',shop:'Shop öffnen',sell:'Verkaufen',fuse:'Fuse Machine',sakura:'Sakura-Inkubator',index:'Index öffnen'}[st]}
   }
   $('#hint').style.display=h?'block':'none';$('#hint').textContent=h;
-  $('#bE').textContent=onTM()&&!P.carry?'👟':P.carry?'⬇️':nearestEgg()?'✋':'E';
+  $('#bE').textContent=onTM()&&!P.carry?'👟':P.carry?'⬇️':readySlotNear()>=0?'🐣':nearestEgg()?'✋':'E';
   if(onTM()){const pos=(Math.sin(tmPhase)+1)/2;$('#tmMark').style.left=`calc(${pos*100}% - 3px)`;$('#tmInfo').textContent=`+${fmt(stepGain())} Speed pro Schritt · 3 Schritte/Sek. · Perfekt = 10 Schritte`}
 }
 
@@ -1086,7 +1096,7 @@ function renderModal(){
       h+=`<div class="row"><div class="t"><b>💰 x2 Money</b><small>Pets verdienen dauerhaft doppelt</small></div><button class="btn g" data-a="money2" ${S.money2||S.money<2e6?'disabled':''}>${S.money2?'Gekauft ✓':'Kaufen '+fmt(2e6)}</button></div>`;
       h+=`<div class="row"><div class="t"><b>🌱 x2 Growth</b><small>Eier wachsen dauerhaft doppelt so schnell</small></div><button class="btn g" data-a="growth2" ${S.growth2||S.money<5e6?'disabled':''}>${S.growth2?'Gekauft ✓':'Kaufen '+fmt(5e6)}</button></div>`}
     else if(tab==='weap'){const tc=Math.max(500,Math.floor(totalIncome()*30));
-      h+=`<div class="row"><div class="t"><b>🪤 3 Bärenfallen</b><small>Du hast ${S.traps} · Diebe stecken 5 Sek. fest (Taste B)</small></div><button class="btn g" data-a="buyTraps" ${S.money<tc?'disabled':''}>Kaufen ${fmt(tc)}</button></div><p class="note">🏏 Schläger (Q): Neue Skins gibt's, wenn du den Index eines Bioms komplett machst – höhere Stufen schleudern weiter!</p>`;
+      h+=`<p class="note">🏏 Schläger (Q oder Mausklick): haut Bots und Wächter kurz weg. Neue Skins gibt's, wenn du den Index eines Bioms komplett machst – höhere Stufen schleudern weiter!</p>`;
       const tier=batTier();BATS.forEach((b,i)=>{const un=i<=tier;h+=`<div class="row"><div class="t"><b><span style="color:${b.c}">▮</span> ${b.n}</b><small>${i===0?'Start':'Index '+BIOMES[i-1].n+' komplett'}</small></div>${un?`<button class="btn ${curBat()===i?'':'p'}" data-a="eqBat" data-i="${i}">${curBat()===i?'Ausgerüstet':'Ausrüsten'}</button>`:'<span>🔒</span>'}</div>`})}
   }
   else if(modal==='fuse'){
@@ -1125,15 +1135,26 @@ function renderModal(){
       <div style="display:flex;gap:6px;margin:6px 0 10px"><button class="btn" data-a="copyCode">📋 Kopieren</button></div>
       <textarea id="codeIn" placeholder="Code hier einfügen…"></textarea><button class="btn p" data-a="importCode" style="margin-top:6px">Code laden</button>`;
   }
+  else if(modal==='pause'){
+    T.textContent='⏸️ Pause';
+    h+=`<div style="display:flex;flex-direction:column;gap:8px;max-width:360px;margin:0 auto">
+      <button class="btn g" data-a="resume" style="font-size:18px;padding:12px">▶️ Weiterspielen</button>
+      <button class="btn" data-a="go" data-i="shop" style="font-size:16px;padding:10px">🛒 Shop</button>
+      <button class="btn" data-a="go" data-i="index" style="font-size:16px;padding:10px">📖 Pet-Index</button>
+      <button class="btn" data-a="go" data-i="account" style="font-size:16px;padding:10px">👤 Konto & Spielstand</button>
+      <button class="btn" data-a="go" data-i="settings" style="font-size:16px;padding:10px">⚙️ Einstellungen</button>
+      <button class="btn y" data-a="tpHome" style="font-size:16px;padding:10px">🏠 Zurück zur Basis</button>
+    </div>
+    <p class="note" style="text-align:center;margin-top:14px">💻 WASD laufen · Maus ziehen = Kamera · E Ei klauen/schlüpfen · Q/Klick Schläger · Leertaste springen</p>`;
+  }
   else if(modal==='settings'){
     T.textContent='⚙️ Einstellungen';
     h+=`<div class="row"><div class="t"><b>👤 Konto & Spielstand</b><small>Login, Cloud, Spielstand-Code</small></div><button class="btn" data-a="openAcc">Öffnen</button></div>
       <div class="row"><div class="t"><b>🎨 Grafik: ${LOW?'Niedrig':'Hoch'}</b><small>Niedrig = ruckelt weniger auf schwachen Handys (lädt neu)</small></div><button class="btn" data-a="gfx">${LOW?'Auf Hoch':'Auf Niedrig'}</button></div>
-      <div class="row"><div class="t"><b>🦹 NPC-Diebe</b><small>Bots versuchen ab und zu, aus deinem Pen zu klauen</small></div><button class="btn ${S.thieves?'g':''}" data-a="togThieves">${S.thieves?'An':'Aus'}</button></div>
       <div class="row"><div class="t"><b>🗑️ Spielstand löschen</b><small>Alles zurücksetzen</small></div><button class="btn r" data-a="reset">Löschen</button></div>`;
     if(!S.cheat)h+=`<div class="row"><div class="t"><b>🔑 Code eingeben</b></div><div><input type="text" id="code" placeholder="Code…" style="width:120px"> <button class="btn" data-a="code">OK</button></div></div>`;
     else{h+=`<h3>😎 Cheat-Menü</h3><div style="display:flex;flex-wrap:wrap;gap:6px">
-      ${[['c_m1','💰 +1 Mio.'],['c_m2','💰 +1 Mrd.'],['c_m3','💰 Geld ×10'],['c_s1','⚡ +10 Mio. Speed'],['c_s2','⚡ +1 Mrd. Speed'],['c_eggs','🥚 Alle Eier fertig'],['c_night','🌙 Nacht starten'],['c_day','☀️ Tag'],['c_respawn','🔄 Eier neu spawnen'],['c_secret','✨ Bestes Ei hier'],['c_god',S.god?'🛡️ Godmode AUS':'🛡️ Godmode AN'],['c_index','📖 Index komplett'],['c_slots','🏠 Max. Plätze'],['c_thief','🚨 Diebe jetzt'],['c_traps','🪤 +10 Fallen'],['c_off','🔒 Cheats ausblenden']].map(([a,n])=>`<button class="btn p" data-a="${a}">${n}</button>`).join('')}
+      ${[['c_m1','💰 +1 Mio.'],['c_m2','💰 +1 Mrd.'],['c_m3','💰 Geld ×10'],['c_s1','⚡ +10 Mio. Speed'],['c_s2','⚡ +1 Mrd. Speed'],['c_eggs','🥚 Alle Eier fertig'],['c_night','🌙 Nacht starten'],['c_day','☀️ Tag'],['c_respawn','🔄 Eier neu spawnen'],['c_secret','✨ Bestes Ei hier'],['c_god',S.god?'🛡️ Godmode AUS':'🛡️ Godmode AN'],['c_index','📖 Index komplett'],['c_slots','🏠 Max. Plätze'],['c_off','🔒 Cheats ausblenden']].map(([a,n])=>`<button class="btn p" data-a="${a}">${n}</button>`).join('')}
       </div><p class="note" style="margin-top:10px">🌠 Teleport:</p><div style="display:flex;flex-wrap:wrap;gap:6px"><button class="btn" data-a="c_tp" data-i="-1">🏠 Basis</button>${BIOMES.map((B,i)=>`<button class="btn" data-a="c_tp" data-i="${i}">${B.e} ${B.n}</button>`).join('')}</div>`}
   }
   B.innerHTML=h;
@@ -1168,6 +1189,9 @@ function act(a,i){
       const m=Math.random()<.025?'Spirit':'Bloom';if(o.mut.includes(m)){toast(`🌸 ${m} hat das Ei schon – kein Effekt.`);break}
       o.mut.push(m);o.tot*=1.25;o.left*=1.25;toast(m==='Spirit'?'👻 WOW! SPIRIT-Mutation!':'🌸 Bloom-Mutation!',3000);break}
     case 'openAcc':modal='account';break;
+    case 'resume':closeModal();return;
+    case 'go':modal=i;modalArg=null;break;
+    case 'tpHome':dropEgg();P.x=SPAWN.x;P.y=SPAWN.y;P.stun=0;closeModal();toast('🏠 Zurück in der Basis');return;
     case 'gfx':save();localStorage.setItem('sae_lowgfx',LOW?'0':'1');location.reload();return;
     case 'google':loginGoogle();break;
     case 'mailLogin':loginMail(false);break;
@@ -1204,12 +1228,13 @@ $('#modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')closeModal
 $('#btnSet').onclick=()=>openModal('settings');
 $('#btnIdx').onclick=()=>openModal('index');
 $('#btnAcc').onclick=()=>openModal('account');
+$('#btnPause').onclick=()=>{if(started)openModal('pause')};
 $('#tmBtn').onclick=tmTap;
 
 // ---------- Eingabe ----------
 addEventListener('keydown',e=>{
   if(['INPUT','TEXTAREA'].includes(e.target.tagName)){if(e.key==='Enter'&&e.target.id==='code')act('code');return}
-  if(e.code==='Escape'){if(modal)closeModal();return}
+  if(e.code==='Escape'){if(modal)closeModal();else if(started)openModal('pause');return}
   if(modal)return;
   keys[e.code]=true;
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
@@ -1217,14 +1242,13 @@ addEventListener('keydown',e=>{
   if(e.code==='KeyE')action();
   if(e.code==='Space'){if(onTM()&&!P.carry)tmTap();else jump()}
   if(e.code==='KeyQ')swing();
-  if(e.code==='KeyB')placeTrap();
 });
 addEventListener('keyup',e=>{keys[e.code]=false});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=false});
 const drags=new Map();
-cv.addEventListener('pointerdown',e=>{drags.set(e.pointerId,{x:e.clientX,y:e.clientY});cv.setPointerCapture(e.pointerId)});
+cv.addEventListener('pointerdown',e=>{drags.set(e.pointerId,{x:e.clientX,y:e.clientY,sx:e.clientX,sy:e.clientY,t:performance.now()});cv.setPointerCapture(e.pointerId)});
 cv.addEventListener('pointermove',e=>{const d=drags.get(e.pointerId);if(!d)return;camYaw+=(e.clientX-d.x)*.006;camPitch=clamp(camPitch+(e.clientY-d.y)*.004,.08,1.3);d.x=e.clientX;d.y=e.clientY});
-const endDrag=e=>drags.delete(e.pointerId);
+const endDrag=e=>{const d=drags.get(e.pointerId);if(d&&e.type==='pointerup'&&e.pointerType==='mouse'&&e.button===0&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6&&performance.now()-d.t<350)swing();drags.delete(e.pointerId)};
 cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
 cv.addEventListener('wheel',e=>{e.preventDefault();camDist=clamp(camDist+e.deltaY*.02,6,35)},{passive:false});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
@@ -1241,7 +1265,6 @@ if(isTouch){$('#touch').style.display='block';$('#tmBtn').innerHTML='👟 Tritt!
 $('#bE').addEventListener('pointerdown',e=>{e.preventDefault();action()});
 $('#bQ').addEventListener('pointerdown',e=>{e.preventDefault();swing()});
 $('#bJ').addEventListener('pointerdown',e=>{e.preventDefault();if(onTM()&&!P.carry)tmTap();else jump()});
-$('#bB').addEventListener('pointerdown',e=>{e.preventDefault();placeTrap()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){save();cloudSave(false)}});
 addEventListener('beforeunload',save);
 
@@ -1249,7 +1272,7 @@ addEventListener('beforeunload',save);
 let last=performance.now();
 function loop(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(started)update(dt);
+  if(started&&modal!=='pause')update(dt);
   render(now/1000,dt);
   hudT+=dt;if(hudT>.1){hudT=0;updHUD()}
   if(modal==='pen'){loop.mt=(loop.mt||0)+dt;if(loop.mt>.5){loop.mt=0;renderModal()}}
