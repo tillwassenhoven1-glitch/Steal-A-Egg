@@ -1,6 +1,6 @@
 # 🥚 Steal an Egg
 
-Ein Eier-Klau-Tycoon im Browser – ähnlich wie das Roblox-Spiel „Steal an Egg“, aber als Singleplayer.
+Ein 3D-Eier-Klau-Tycoon im Browser – ähnlich wie das Roblox-Spiel „Steal an Egg“, aber als Singleplayer. Mit Blockfiguren im Roblox-Stil.
 
 ## ▶️ Jetzt spielen
 
@@ -13,7 +13,7 @@ Keine Werbung, kein Echtgeld-Shop. 🙌
 
 - 🗺️ Lauf durch 9 Biome – vom Wald bis in den Kosmos
 - 🥚 Schnapp dir ein Ei (**E**) und bring es in deinen Pen (Safe Zone)
-- 👹 Jedes Biom hat einen Wächter – ist dein Speed zu niedrig, erwischt er dich und du lässt das Ei fallen. **RUN!!**
+- 👹 Jedes Biom hat einen Wächter – sobald du ein Ei trägst, jagt er dich. Ist dein Speed zu niedrig, erwischt er dich und du lässt das Ei fallen. **RUN!!**
 - ⚖️ Große Eier machen dich langsamer, seltene Eier machen den Wächter schneller
 - 🐣 Im Pen schlüpfen die Eier – danach verdienen deine Pets Geld pro Sekunde, auch offline
 - 🏃 Trainiere auf dem Laufband, um schneller zu werden und neue Biome zu erreichen
@@ -35,9 +35,10 @@ Keine Werbung, kein Echtgeld-Shop. 🙌
 
 ## Steuerung
 
-- 💻 **WASD / Pfeile** laufen · **E** aufheben/benutzen · **Q** Schläger · **B** Falle · **Leertaste** Laufband
-- 📱 Joystick links, Knöpfe rechts
+- 💻 **WASD** laufen · **Maus ziehen** Kamera drehen · **Mausrad** Zoom
+- 💻 **E** aufheben/benutzen · **Q** Schläger · **B** Falle · **Leertaste** springen / Laufband
+- 📱 Joystick links, Kamera mit dem Finger ziehen, Knöpfe rechts
 
 ---
 
-Version 0.1 Open Beta
+Version 0.2 Open Beta · 3D mit [three.js](https://threejs.org) (MIT-Lizenz)
