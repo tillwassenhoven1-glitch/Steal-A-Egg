@@ -9,6 +9,14 @@ Ein 3D-Eier-Klau-Tycoon im Browser – ähnlich wie das Roblox-Spiel „Steal an
 Keine Installation nötig – läuft auf Handy, iPad und PC. 🎮
 Keine Werbung, kein Echtgeld-Shop. 🙌
 
+## 🌐 Mit Freunden spielen
+
+- Auf **🌐** tippen → **Raum erstellen** → Code (z. B. `K7QX2`) oder Einladungslink an Freunde schicken
+- Freunde tippen auf **🌐** → Code eingeben → **Beitreten**
+- Bis zu **4 Spieler** pro Raum – jeder hat seinen eigenen Plot
+- Klauen bei anderen geht nicht – nur aus den Biomen 🥚
+- Die Map hat immer 4 Plots, auch wenn du alleine spielst
+
 ## So funktioniert's
 
 - 🗺️ Lauf durch 9 Biome – vom Wald bis in den Kosmos
