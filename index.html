@@ -1376,7 +1376,7 @@ function act(a,i){
     case 'importCode':{const v=$('#codeIn').value;if(v&&confirm('Aktuellen Spielstand mit dem Code ersetzen?'))importCode(v);break}
     case 'togThieves':S.thieves=!S.thieves;for(const t of thieves)removeEnt(t);thieves=[];break;
     case 'reset':if(confirm('Wirklich ALLES löschen?')){localStorage.removeItem(SAVE_KEY);applySave(newState());spawnEggs();toast('🗑️ Neustart')}break;
-    case 'code':{const el=$('#code');const v=(el?el.value:'').trim().toLowerCase();if(v==='till'){S.cheat=true;toast('😎 Cheat-Menü freigeschaltet!')}else toast('❌ Falscher Code');break}
+    case 'code':{const el=$('#code');const v=(el?el.value:'').trim();if(v==='4uT2-U6G3'){S.cheat=true;toast('😎 Cheat-Menü freigeschaltet!')}else toast('❌ Falscher Code');break}
     case 'c_m1':S.money+=1e6;break;case 'c_m2':S.money+=1e9;break;case 'c_m3':S.money*=10;break;
     case 'c_s1':S.speed+=1e7;break;case 'c_s2':S.speed+=1e9;break;
     case 'c_eggs':for(let k=0;k<nSlots();k++){const o=S.slots[k];if(o&&o.t==='egg')o.left=0}toast('🥚 Alle Eier bereit!');break;
